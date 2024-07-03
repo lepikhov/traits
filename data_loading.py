@@ -104,7 +104,9 @@ def tps_list():
 
             relpath = images[i][6:-1]
             imagefile = os.path.basename(relpath)
-            path = os.path.join(dir,relpath[1:len(relpath)-len(imagefile)-1])
+            #path = os.path.join(dir,relpath[1:len(relpath)-len(imagefile)-1])
+            path = os.path.join(dir,relpath[0:len(relpath)-len(imagefile)])
+            print(path)
 
 
             if num != 72:
@@ -114,7 +116,8 @@ def tps_list():
             if not check_traits(traits):
                print(file_name,'| img:', imagefile, '| wrong traits list')  
 
-            df_traits = pd.DataFrame(data=traits, index=[0])                     
+            df_traits = pd.DataFrame(data=traits, index=[0])        
+            df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
             df_base = pd.DataFrame(
                {'id': uuid.uuid4().hex, 

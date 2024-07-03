@@ -10,3 +10,4 @@ TRAITS_KEYS = ['head_0', 'nape', 'neck_0', 'withers_0', 'shoulder',
                'angle_14', 'angle_15'
             ]
 
+DEVICE = 'cuda'

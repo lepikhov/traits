@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 from dataset import TraitsDataset, AttributesDataset
 from models.mobilenet import MultiOutputModel_Mobilenet
 from models.resnet import MultiOutputModel_Resnet
+from models.squeezenet import MultiOutputModel_Squeezenet
+from models.efficientnet import MultiOutputModel_Efficientnet
 from test import calculate_metrics, validate#, visualize_grid
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -31,10 +33,13 @@ if __name__ == '__main__':
     batch_size = 16
     num_workers = 8  # number of processes to handle dataset loading
 
-
+    torch.cuda.empty_cache()
+    
     device = torch.device("cuda" if torch.cuda.is_available() and DEVICE == 'cuda' else "cpu")
 
     print(DEVICE, device)
+    
+    #torch.autograd.set_detect_anomaly(True)
 
     df = data_loading.tps_list() 
     # attributes variable contains labels for the categories in the dataset and mapping between string names and IDs
@@ -62,15 +67,19 @@ if __name__ == '__main__':
     val_dataset = TraitsDataset(df, attributes, val_transform)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)   
 
-    model_type = 'mobilenet'
+    #model_type = 'mobilenet'
     #model_type = 'resnet'
+    #model_type = 'squeezenet'
+    model_type = 'efficientnet'    
     match model_type:
         case 'mobilenet':
-            model = MultiOutputModel_Mobilenet(n_classes=attributes).to(device)
+            model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True).to(device)
         case 'squeezenet':
-            pass
+            model = MultiOutputModel_Squeezenet(n_classes=attributes, pretrained=True).to(device)
         case 'resnet':    
-            model = MultiOutputModel_Resnet(n_classes=attributes).to(device)
+            model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True).to(device)
+        case 'efficientnet':    
+            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True).to(device)            
         case _:
             pass  
      
@@ -110,6 +119,7 @@ if __name__ == '__main__':
             for i in range(len(TRAITS_KEYS)):
                 accuracies[TRAITS_KEYS[i]] += batch_accuracies[TRAITS_KEYS[i]]
 
+            #loss_train.backward(retain_graph=True)
             loss_train.backward()
             optimizer.step()
 

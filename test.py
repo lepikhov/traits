@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 from dataset import TraitsDataset, AttributesDataset #, mean, std
-from models.mobilenet import MultiOutputModel_Mobilenet
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, balanced_accuracy_score
 from torch.utils.data import DataLoader
 from config import TRAITS_KEYS

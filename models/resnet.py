@@ -6,11 +6,11 @@ from config import TRAITS_KEYS
 
 
 class MultiOutputModel_Resnet(nn.Module):
-    def __init__(self, n_classes):
+    def __init__(self, n_classes, pretrained=True):
         super().__init__()
 
             
-        self.base_model = models.resnet50(pretrained=True) # 
+        self.base_model = models.resnet50(pretrained=pretrained) # 
         last_channel = self.base_model.fc.in_features  #  
         self.base_model.fc = nn.Sequential()
 
@@ -100,11 +100,7 @@ class MultiOutputModel_Resnet(nn.Module):
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_rib_cage_0)
         )                 
-
-        self.rib_cage_0 = nn.Sequential(
-            nn.Dropout(p=0.2),
-            nn.Linear(in_features=last_channel, out_features=n_classes.num_rib_cage_0)
-        )        
+       
 
         self.angle_4 = nn.Sequential(
             nn.Dropout(p=0.2),

@@ -6,11 +6,11 @@ from config import TRAITS_KEYS
 
 
 class MultiOutputModel_Mobilenet(nn.Module):
-    def __init__(self, n_classes):
+    def __init__(self, n_classes, pretrained=True):
         super().__init__()
 
 
-        self.base_model = models.mobilenet_v2(pretrained=True).features  # take the model without classifier
+        self.base_model = models.mobilenet_v2(pretrained=pretrained).features  # take the model without classifier
         last_channel = models.mobilenet_v2().last_channel  # size of the layer before classifier
         
 
@@ -98,12 +98,7 @@ class MultiOutputModel_Mobilenet(nn.Module):
         self.lower_back_0 = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_lower_back_0)
-        )         
-
-        self.rib_cage_0 = nn.Sequential(
-            nn.Dropout(p=0.2),
-            nn.Linear(in_features=last_channel, out_features=n_classes.num_rib_cage_0)
-        )                 
+        )                        
 
         self.rib_cage_0 = nn.Sequential(
             nn.Dropout(p=0.2),

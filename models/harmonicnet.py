@@ -1,24 +1,33 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 from config import TRAITS_KEYS
+import models.harmonicnet_impl.models as models
 
+class args_class():
+    def __init__(self):
+        self.arch='resnet50'
+        self.harm_root=True
+        self.harm_res_blocks=True
+        self.pool='avg'
+        self.levels=[None, None, 3, 2]
+            
 
-class MultiOutputModel_Mobilenet(nn.Module):
+class MultiOutputModel_Harmonicnet(nn.Module):
     def __init__(self, n_classes, pretrained=True):
         super().__init__()
 
+        args = args_class()
 
-        self.base_model = models.mobilenet_v2(pretrained=pretrained).features  # take the model without classifier
-        last_channel = models.mobilenet_v2().last_channel  # size of the layer before classifier
         
+        self.base_model= models.__dict__[args.arch](pretrained=pretrained, harm_root=args.harm_root, harm_res_blocks=args.harm_res_blocks, 
+                                           pool=args.pool, levels=args.levels)
+                    
 
-        # the input for the classifier should be two-dimensional, but we will have
-        # [batch_size, channels, width, height]
-        # so, let's do the spatial averaging: reduce width and height to 1
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-
+        last_channel = 2048  # size of the layer before classifier
+        self.base_model.fc = nn.Sequential()
+            
+        
         # create separate classifiers for our outputs
         self.head_0 = nn.Sequential(
             nn.Dropout(p=0.2),
@@ -143,14 +152,12 @@ class MultiOutputModel_Mobilenet(nn.Module):
         self.angle_15 = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_angle_15)
-        )               
+        )  
+      
 
     def forward(self, x):
-        x = self.base_model(x)
-        x = self.pool(x)
-
-        # reshape from [batch, channels, 1, 1] to [batch, channels] to put it into classifier
-        x = torch.flatten(x, 1)
+        x = self.base_model(x)   
+        
 
         return {
             'head_0': self.head_0(x), 
@@ -181,7 +188,6 @@ class MultiOutputModel_Mobilenet(nn.Module):
         }
 
 
-
     def get_loss(self, net_output, ground_truth):
         losses={}
         total_loss=0
@@ -189,3 +195,4 @@ class MultiOutputModel_Mobilenet(nn.Module):
             losses[TRAITS_KEYS[i]] = F.cross_entropy(net_output[TRAITS_KEYS[i]], ground_truth[TRAITS_KEYS[i]])
             total_loss += losses[TRAITS_KEYS[i]]
         return total_loss, losses
+    

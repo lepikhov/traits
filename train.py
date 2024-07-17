@@ -7,6 +7,7 @@ from dataset import TraitsDataset, AttributesDataset
 from models.mobilenet import MultiOutputModel_Mobilenet
 from models.resnet import MultiOutputModel_Resnet
 from models.squeezenet import MultiOutputModel_Squeezenet
+from models.harmonicnet import MultiOutputModel_Harmonicnet
 from models.efficientnet import MultiOutputModel_Efficientnet
 from test import calculate_metrics, validate#, visualize_grid
 from torch.utils.data import DataLoader
@@ -70,7 +71,8 @@ if __name__ == '__main__':
     #model_type = 'mobilenet'
     #model_type = 'resnet'
     #model_type = 'squeezenet'
-    model_type = 'efficientnet'    
+    #model_type = 'efficientnet'   
+    model_type = 'harmonicnet'     
     match model_type:
         case 'mobilenet':
             model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True).to(device)
@@ -79,7 +81,9 @@ if __name__ == '__main__':
         case 'resnet':    
             model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True).to(device)
         case 'efficientnet':    
-            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True).to(device)            
+            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True).to(device)   
+        case 'harmonicnet':    
+            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True).to(device)                       
         case _:
             pass  
      

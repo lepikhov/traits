@@ -4,12 +4,15 @@ from datetime import datetime
 import torch
 import torchvision.transforms as transforms
 from dataset import TraitsDataset, AttributesDataset
+
 from models.mobilenet import MultiOutputModel_Mobilenet
 from models.resnet import MultiOutputModel_Resnet
 from models.squeezenet import MultiOutputModel_Squeezenet
 from models.harmonicnet import MultiOutputModel_Harmonicnet
 from models.efficientnet import MultiOutputModel_Efficientnet
-from test import calculate_metrics, validate#, visualize_grid
+from models.vitnet import MultiOutputModel_Vitnet
+
+from test import calculate_metrics, validate #, visualize_grid
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -48,6 +51,7 @@ if __name__ == '__main__':
 
     # specify image transforms for augmentation during training
     train_transform = transforms.Compose([
+        transforms.Resize((224, 224)),        
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0),
         #transforms.RandomAffine(degrees=20, translate=(0.1, 0.1), scale=(0.8, 1.2),
@@ -58,6 +62,7 @@ if __name__ == '__main__':
 
     # during validation we use only tensor and normalization transforms
     val_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
         #transforms.Normalize(mean, std)
     ])
@@ -72,7 +77,9 @@ if __name__ == '__main__':
     #model_type = 'resnet'
     #model_type = 'squeezenet'
     #model_type = 'efficientnet'   
-    model_type = 'harmonicnet'     
+    #model_type = 'harmonicnet'     
+    model_type = 'vitnet'    
+         
     match model_type:
         case 'mobilenet':
             model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True).to(device)
@@ -83,7 +90,9 @@ if __name__ == '__main__':
         case 'efficientnet':    
             model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True).to(device)   
         case 'harmonicnet':    
-            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True).to(device)                       
+            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True).to(device)         
+        case 'vitnet':    
+            model = MultiOutputModel_Vitnet(n_classes=attributes, pretrained=True).to(device)                               
         case _:
             pass  
      

@@ -28,7 +28,6 @@ class MultiOutputModel_Efficientnet(nn.Module):
         self.head_0[1] = nn.Linear(in_features=last_channel, out_features=n_classes.num_head_0)
         
 
-
         self.nape = classifier
         self.nape[1] = nn.Linear(in_features=last_channel, out_features=n_classes.num_nape)       
 

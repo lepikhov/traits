@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
-from config import TRAITS_KEYS
+from config import TRAITS_KEYS, ROOT_DATA_DIRECTORY 
 
 import data_loading
 import torch
@@ -82,7 +82,9 @@ class TraitsDataset(Dataset):
         filename = self.df.iloc[idx]['imagefile']       
         img_name = os.path.join(filepath, filename)
 
+        print(filepath, filename)
         image = Image.open(img_name) #cv2.imread(img_name)
+        print(image.size)
         # If the image is Greyscale convert it to RGB
         #gr, _ = data_loading.is_gray_scale(image)
         #if gr:
@@ -91,6 +93,7 @@ class TraitsDataset(Dataset):
         # apply the image augmentations if needed
         if self.transform:
             image = self.transform(image)
+            print(image.size())
 
         labels={}
         for i in range(len(TRAITS_KEYS)):
@@ -112,7 +115,8 @@ if __name__ == "__main__":
     train_dataset = TraitsDataset(df, attributes=attributes)
 
 
-    #print(len(train_dataset))    
-    print(train_dataset.__getitem__(2))
-    print(train_dataset.__len__())
-    print(attributes.angle_4)
+    print(len(train_dataset))    
+    for i in range(len(train_dataset)):
+        print(i, train_dataset.__getitem__(i))
+    #print(train_dataset.__len__())
+    #print(attributes.angle_4)

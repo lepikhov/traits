@@ -29,6 +29,12 @@ def checkpoint_save(model, name, epoch):
     f = os.path.join(name, 'checkpoint-{:06d}.pth'.format(epoch))
     torch.save(model.state_dict(), f)
     print('Saved checkpoint:', f)
+    
+def collate_fn(batch):
+  return {
+      'image': torch.tensor([x['image'] for x in batch]),
+      'labels': torch.tensor([x['labels'] for x in batch])
+} 
 
 if __name__ == '__main__':    
 
@@ -67,18 +73,18 @@ if __name__ == '__main__':
         #transforms.Normalize(mean, std)
     ])
 
-    train_dataset = TraitsDataset(df, attributes, train_transform)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)    
+    train_dataset = TraitsDataset(df[:8], attributes, train_transform)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=None )#collate_fn)    
 
-    val_dataset = TraitsDataset(df, attributes, val_transform)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)   
+    val_dataset = TraitsDataset(df[8:16], attributes, val_transform)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=None )#collate_fn)   
 
-    #model_type = 'mobilenet'
+    model_type = 'mobilenet'
     #model_type = 'resnet'
     #model_type = 'squeezenet'
     #model_type = 'efficientnet'   
     #model_type = 'harmonicnet'     
-    model_type = 'vitnet'    
+    #model_type = 'vitnet'    
          
     match model_type:
         case 'mobilenet':

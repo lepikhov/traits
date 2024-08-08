@@ -10,5 +10,8 @@ TRAITS_KEYS = ['head_0', 'nape', 'neck_0', 'withers_0', 'shoulder',
                'angle_14', 'angle_15'
             ]
 
+TRAITS_KEYS_AUX = ['type', 'lower_back_len',]
+
+TRAITS_KEYS_SERVICE = ['ID', 'img_name',]
 
 DEVICE = 'cuda'

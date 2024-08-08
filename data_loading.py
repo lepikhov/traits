@@ -24,15 +24,42 @@ warnings.filterwarnings("ignore")
 plt.ion()   # interactive mode
 
 
+def statistics(df, trait):
+    categories = []
+    categories_counters = {}
+    
+    print('')
+    print('statistic for ', trait, ':')
+    
+    items = df[trait]
+    
+    for item in items:
+        if not item in categories:
+            categories.append(item)
+            categories_counters.update({item:1})
+        else:
+            categories_counters[item] += 1
+            
+    categories.sort()
+    sorted_categories_counters = {i: categories_counters[i] for i in categories}          
+                        
+    print(sorted_categories_counters)
+
+
 def check_traits(traits):
     cnt = 0
 
     for key in traits:
         cnt += 1
-        if not(key in config.TRAITS_KEYS):        
-            return False
+        if key in config.TRAITS_KEYS:
+            continue 
+        if key in config.TRAITS_KEYS_AUX:        
+            continue
+        if key in config.TRAITS_KEYS_SERVICE:        
+            continue
+        return False
     
-    return (False, True)[cnt == len(config.TRAITS_KEYS)]      
+    return (False, True)[cnt >= len(config.TRAITS_KEYS)]      
     
 # help-function for search patterns like 'IMAGE', 'LM', etc
 # and its indexes in tps-file 
@@ -76,7 +103,10 @@ def tps_list():
     os.system('rm filelist.txt')          
 
     #create empty dataframe
-    df=pd.DataFrame(columns=['id','landmarks','imagedir','imagefile'])    
+    df=pd.DataFrame(columns=['id','landmarks','imagedir','imagefile'])  
+    
+    wrong_traits_list_count = 0  
+    correct_traits_list_count = 0  
 
     for file in tps_files:
 
@@ -93,7 +123,10 @@ def tps_list():
 
         i=0
         for inx in lmixs:
-            num = int(lines[inx][3:])
+            try:
+                num = int(lines[inx][3:])
+            except:
+                print(lines[inx], inx)    
             if (inx+num+1) < len(lines):
                 pnts = lines[inx+1:inx+1+num]
                 #print(pnts)
@@ -102,40 +135,55 @@ def tps_list():
                 pnt =  list(map(comma_float, p.split(sep=' ')))
                 ps.append(pnt) 
 
-            relpath = images[i][6:-1]
+            try:
+                relpath = images[i][6:-1]
+            except:
+                print(i)    
+            relpath = relpath.replace('\\', '/')
             imagefile = os.path.basename(relpath)
             #path = os.path.join(dir,relpath[1:len(relpath)-len(imagefile)-1])
             path = os.path.join(dir,relpath[0:len(relpath)-len(imagefile)])
-            print(path)
+            #print(path)
 
 
-            if num != 72:
-                print(file_name,'| img:', imagefile, '| num points:', num)    
+            #if num != 72:
+            #    print(file_name,'| img:', imagefile, '| num points:', num)    
 
-            traits = json.loads(traits_strings[i][8:-1].replace('\'','"'))
+            try:
+                traits = json.loads(traits_strings[i][8:-1].replace('\'','"'))
+            except:
+                pass
+                #print('bad traits strings for:', imagefile, ':' , traits_strings)
+                                
             if not check_traits(traits):
                print(file_name,'| img:', imagefile, '| wrong traits list')  
+               print(traits)
+               wrong_traits_list_count += 1 
+            else:
+                correct_traits_list_count += 1                    
 
-            df_traits = pd.DataFrame(data=traits, index=[0])        
-            df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
+                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in config.TRAITS_KEYS, traits.items())}, index=[0])        
+                df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
-            df_base = pd.DataFrame(
-               {'id': uuid.uuid4().hex, 
-                'imagedir':path, 
-                'imagefile': imagefile,
-                'landmarks': [None],                             
-            }, index=[0]
-            )
-            df_base.loc[0,'landmarks'] = ps
+                df_base = pd.DataFrame(
+                {'id': uuid.uuid4().hex, 
+                    'imagedir':path, 
+                    'imagefile': imagefile,
+                    'landmarks': [None],                             
+                }, index=[0]
+                )
+                df_base.loc[0,'landmarks'] = ps
 
-            df = df.append(pd.concat([df_base, df_traits], axis=1),
-                            ignore_index=True)    
+                df = df.append(pd.concat([df_base, df_traits], axis=1),
+                                ignore_index=True)    
             
-            i += 1
+                i += 1
         print(file_name, " items:", i)            
 
     print('total number:\n', df.count())
     print('number of landmarks:\n', len(df['landmarks'][0]))
+    print('number of correct traits list:', correct_traits_list_count)
+    print('number of wrong traits list:', wrong_traits_list_count)
 
     return df
 
@@ -177,3 +225,6 @@ if __name__ == "__main__":
     tps_df=tps_list()    
     print(tps_df.head(31))
     print(tps_df.columns)
+    
+    for trait in config.TRAITS_KEYS:
+        statistics(tps_df, trait)

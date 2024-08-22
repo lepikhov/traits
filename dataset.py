@@ -8,6 +8,7 @@ from config import TRAITS_KEYS, ROOT_DATA_DIRECTORY
 
 import data_loading
 import torch
+from data_loading import is_gray_scale
 
 
 class AttributesDataset():
@@ -72,6 +73,7 @@ class TraitsDataset(Dataset):
         self.transform = transform
         self.df = df      
         self.attributes = attributes 
+        
 
     def __len__(self):
         return len(self.df)
@@ -81,19 +83,18 @@ class TraitsDataset(Dataset):
         filepath = self.df.iloc[idx]['imagedir']        
         filename = self.df.iloc[idx]['imagefile']       
         img_name = os.path.join(filepath, filename)
+        
 
-        print(filepath, filename)
-        image = Image.open(img_name) #cv2.imread(img_name)
-        print(image.size)
+        image = cv2.imread(img_name)
         # If the image is Greyscale convert it to RGB
-        #gr, _ = data_loading.is_gray_scale(image)
+        #gr, _ = is_gray_scale(image)
         #if gr:
         #    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 
         # apply the image augmentations if needed
         if self.transform:
-            image = self.transform(image)
-            print(image.size())
+            transformed = self.transform(image=image)
+            image = transformed['image']             
 
         labels={}
         for i in range(len(TRAITS_KEYS)):
@@ -101,7 +102,6 @@ class TraitsDataset(Dataset):
             label = torch.as_tensor(label, dtype=torch.long)
             labels[TRAITS_KEYS[i]] = label
             
-
         # return the image and all the associated labels
         dict_data = {
             'image': image,

@@ -173,9 +173,6 @@ class MultiOutputModel_Resnet(nn.Module):
             'angle_15': self.angle_15(x)            
         }
 
-        """
-
-        """
 
     def get_loss(self, net_output, ground_truth):
         losses={}

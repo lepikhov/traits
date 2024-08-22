@@ -57,6 +57,8 @@ def validate(model, dataloader, logger, iteration, device, checkpoint=None):
         logger.add_scalar(f'val_accuracy_{TRAITS_KEYS[i]}', accuracies[TRAITS_KEYS[i]], iteration)
 
     model.train()
+    
+    return avg_loss, accuracies
 
 def calculate_metrics(output, target):
 

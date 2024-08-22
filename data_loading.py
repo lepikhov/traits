@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
+import math
 
 
 
@@ -40,10 +41,16 @@ def statistics(df, trait):
         else:
             categories_counters[item] += 1
             
+    sum = 0
+    for item in categories_counters.values():
+        sum = sum + item            
+            
     categories.sort()
-    sorted_categories_counters = {i: categories_counters[i] for i in categories}          
-                        
-    print(sorted_categories_counters)
+    sorted_categories_counters = {i: categories_counters[i] for i in categories}     
+    sorted_categories_counters_percents =  {i: 100*categories_counters[i]/sum for i in categories}     
+                    
+    
+    return sorted_categories_counters, sorted_categories_counters_percents 
 
 
 def check_traits(traits):
@@ -162,7 +169,7 @@ def tps_list():
             else:
                 correct_traits_list_count += 1                    
 
-                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in config.TRAITS_KEYS, traits.items())}, index=[0])        
+                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in config.TRAITS_KEYS, traits.items())}, index=[0])                        
                 df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
                 df_base = pd.DataFrame(
@@ -174,8 +181,9 @@ def tps_list():
                 )
                 df_base.loc[0,'landmarks'] = ps
 
-                df = df.append(pd.concat([df_base, df_traits], axis=1),
-                                ignore_index=True)    
+                if not (df_traits == 0).any().any():
+                    df = df.append(pd.concat([df_base, df_traits], axis=1),
+                                    ignore_index=True)    
             
                 i += 1
         print(file_name, " items:", i)            
@@ -219,6 +227,11 @@ def get_horse(sdf, id):
     return img_data
 
 
+def addlabels(axes, i, j, x, y):
+    for k in range(len(x)):
+        axes[i,j].text(k+1, y[k], round(y[k],2), ha = 'center',
+                       #bbox = dict(facecolor = 'red', alpha =.8)
+                       )
        
 
 if __name__ == "__main__":
@@ -226,5 +239,38 @@ if __name__ == "__main__":
     print(tps_df.head(31))
     print(tps_df.columns)
     
+    nrows=5
+    ncols=math.ceil(len(config.TRAITS_KEYS)/nrows)
+    
+         
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(3*ncols, 3*nrows))
+    fig.tight_layout(pad=5.0)
+    
+
+    i = 0
+    j = 0
+    
     for trait in config.TRAITS_KEYS:
-        statistics(tps_df, trait)
+        st, st_percents = statistics(tps_df, trait)
+        print('Absolute counts:\n', st)
+        print('In percents:\n',st_percents)
+    
+        axes[i,j].set_xlim(0, 4)
+        axes[i,j].set_ylim(0, 100)
+        axes[i,j].set_title(f'{trait}')
+        cat = list(st_percents.keys())
+        val = list(st_percents.values())
+        axes[i,j].bar(cat, val)
+        addlabels(axes, i, j, cat, val)
+        axes[i,j].grid()
+
+        
+        i += 1
+        if i>=nrows:
+            i=0
+            j += 1
+            if j>=ncols:
+                j=0
+                 
+        
+    plt.savefig(f"./outputs/dataset_statistics.png")

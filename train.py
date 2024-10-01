@@ -43,6 +43,8 @@ def plot_accuracies(accuracies_list, model_type, color, accuracy_type):
     
     nrows=13
     ncols=math.ceil(len(TRAITS_KEYS)/nrows)
+    #nrows = 2
+    #ncols = 2
     
          
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6*ncols, 3*nrows))
@@ -110,8 +112,9 @@ if __name__ == '__main__':
 
     # specify image transforms for augmentation during training
     train_transform = A.Compose([
-        A.Resize(224, 224),        
+        #A.Resize(224, 224),        
         #A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=20, p=0.5),
+        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
         A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
         #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
@@ -133,12 +136,13 @@ if __name__ == '__main__':
 
     # during validation we use only tensor and normalization transforms
     val_transform = A.Compose([
-        A.Resize(224, 224),
+        #A.Resize(224, 224),
+        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
         A.ToFloat(),
         ToTensorV2(),        
     ])
     
-    training_samples, valid_samples = model_selection.train_test_split(df[:1024], shuffle=True,
+    training_samples, valid_samples = model_selection.train_test_split(df, shuffle=True,
                                                                        random_state=None,
                                                                        test_size=0.2)    
     
@@ -151,8 +155,8 @@ if __name__ == '__main__':
     val_dataset = TraitsDataset(valid_samples, attributes, val_transform)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=None )#collate_fn)   
 
-    model_type = 'mobilenet'
-    #model_type = 'resnet'
+    #model_type = 'mobilenet'
+    model_type = 'resnet'
     #model_type = 'squeezenet'
     #model_type = 'efficientnet'   
     #model_type = 'harmonicnet'     
@@ -197,8 +201,8 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, N_epochs + 1):
         total_loss = 0
         accuracies = {}
-        for i in range(len(TRAITS_KEYS)):
-            accuracies[TRAITS_KEYS[i]] = 0
+        for t in TRAITS_KEYS:
+            accuracies[t] = 0
 
 
         for batch in train_dataloader:
@@ -213,8 +217,8 @@ if __name__ == '__main__':
             total_loss += loss_train.item()
             batch_accuracies = calculate_metrics(output, target_labels)
 
-            for i in range(len(TRAITS_KEYS)):
-                accuracies[TRAITS_KEYS[i]] += batch_accuracies[TRAITS_KEYS[i]]
+            for t in TRAITS_KEYS:
+                accuracies[t] += batch_accuracies[t]
 
             #loss_train.backward(retain_graph=True)
             loss_train.backward()
@@ -224,9 +228,9 @@ if __name__ == '__main__':
         train_loss_list.append(total_loss / n_train_samples)
         
         acc = {}
-        for i in range(len(TRAITS_KEYS)):
-            print(f"{TRAITS_KEYS[i]}: {accuracies[TRAITS_KEYS[i]]/n_train_samples}", end='\t')
-            acc[TRAITS_KEYS[i]]=accuracies[TRAITS_KEYS[i]]/n_train_samples
+        for t in TRAITS_KEYS:
+            print(f"{t}: {accuracies[t]/n_train_samples}", end='\t')
+            acc[t]=accuracies[t]/n_train_samples
         print('\n')            
         
         train_accuracies_list.append(acc)

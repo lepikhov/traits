@@ -144,7 +144,7 @@ class MultiOutputModel_Squeezenet(nn.Module):
     def get_loss(self, net_output, ground_truth):
         losses={}
         total_loss=0
-        for i in range(len(TRAITS_KEYS)):
-            losses[TRAITS_KEYS[i]] = F.cross_entropy(net_output[TRAITS_KEYS[i]], ground_truth[TRAITS_KEYS[i]])
-            total_loss += losses[TRAITS_KEYS[i]]
+        for t in TRAITS_KEYS:
+            losses[t] = F.cross_entropy(net_output[t], ground_truth[t])
+            total_loss += losses[t]
         return total_loss, losses

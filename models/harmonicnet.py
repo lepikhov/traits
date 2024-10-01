@@ -37,8 +37,8 @@ class MultiOutputModel_Harmonicnet(nn.Module):
         self.nape = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_nape)
-        )        
-
+        )
+                
         self.neck_0 = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_neck_0)
@@ -158,7 +158,6 @@ class MultiOutputModel_Harmonicnet(nn.Module):
     def forward(self, x):
         x = self.base_model(x)   
         
-
         return {
             'head_0': self.head_0(x), 
             'nape': self.nape(x), 
@@ -187,12 +186,11 @@ class MultiOutputModel_Harmonicnet(nn.Module):
             'angle_15': self.angle_15(x)            
         }
 
-
+    
     def get_loss(self, net_output, ground_truth):
         losses={}
         total_loss=0
-        for i in range(len(TRAITS_KEYS)):
-            losses[TRAITS_KEYS[i]] = F.cross_entropy(net_output[TRAITS_KEYS[i]], ground_truth[TRAITS_KEYS[i]])
-            total_loss += losses[TRAITS_KEYS[i]]
-        return total_loss, losses
-    
+        for t in TRAITS_KEYS:
+            losses[t] = F.cross_entropy(net_output[t], ground_truth[t])
+            total_loss += losses[t]
+        return total_loss, losses    

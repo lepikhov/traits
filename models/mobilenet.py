@@ -143,7 +143,8 @@ class MultiOutputModel_Mobilenet(nn.Module):
         self.angle_15 = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(in_features=last_channel, out_features=n_classes.num_angle_15)
-        )               
+        )  
+                     
 
     def forward(self, x):
         x = self.base_model(x)
@@ -180,12 +181,10 @@ class MultiOutputModel_Mobilenet(nn.Module):
             'angle_15': self.angle_15(x)            
         }
 
-
-
     def get_loss(self, net_output, ground_truth):
         losses={}
         total_loss=0
-        for i in range(len(TRAITS_KEYS)):
-            losses[TRAITS_KEYS[i]] = F.cross_entropy(net_output[TRAITS_KEYS[i]], ground_truth[TRAITS_KEYS[i]])
-            total_loss += losses[TRAITS_KEYS[i]]
+        for t in TRAITS_KEYS:
+            losses[t] = F.cross_entropy(net_output[t], ground_truth[t])
+            total_loss += losses[t]
         return total_loss, losses

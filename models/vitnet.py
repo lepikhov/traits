@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from config import TRAITS_KEYS
+from traits_config import TRAITS_KEYS
 
 
 class MultiOutputModel_Vitnet(nn.Module):

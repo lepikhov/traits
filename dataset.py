@@ -3,12 +3,12 @@ import cv2
 
 import numpy as np
 from torch.utils.data import Dataset
-from config import TRAITS_KEYS
+from traits_config import TRAITS_KEYS
 
 import data_loading
 import torch
 from data_loading import is_gray_scale
-import utils
+import traits_utils as utils
 
 
 class AttributesDataset():

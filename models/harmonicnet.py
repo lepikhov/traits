@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from config import TRAITS_KEYS
+from traits_config import TRAITS_KEYS
 import models.harmonicnet_impl.models as models
 
 class args_class():

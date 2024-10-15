@@ -13,7 +13,7 @@ import cv2
 import data_loading
 import utils
 
-from predict import checkpoint_load, check_predict, predict, models_types, load_models
+from traits_predict import checkpoint_load, check_predict, predict, models_types, load_models
 
 
 def validate(model, dataloader, logger, iteration, device, checkpoint=None):
@@ -100,7 +100,6 @@ if __name__ == '__main__':
         image_path = os.path.join(filepath, filename)    
         #print(image_path)
         image = cv2.imread(image_path)   
-        image = utils.resize_without_deforming_aspect_ratio(image)
                    
         strong_err = 0
         weak_err = 0

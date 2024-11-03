@@ -8,7 +8,7 @@ import warnings
 
 
 import albumentations.augmentations.functional as F
-import config
+import traits_config
 import cv2
 import imageio
 import matplotlib.pyplot as plt
@@ -58,15 +58,15 @@ def check_traits(traits):
 
     for key in traits:
         cnt += 1
-        if key in config.TRAITS_KEYS:
+        if key in traits_config.TRAITS_KEYS:
             continue 
-        if key in config.TRAITS_KEYS_AUX:        
+        if key in traits_config.TRAITS_KEYS_AUX:        
             continue
-        if key in config.TRAITS_KEYS_SERVICE:        
+        if key in traits_config.TRAITS_KEYS_SERVICE:        
             continue
         return False
     
-    return (False, True)[cnt >= len(config.TRAITS_KEYS)]      
+    return (False, True)[cnt >= len(traits_config.TRAITS_KEYS)]      
     
 # help-function for search patterns like 'IMAGE', 'LM', etc
 # and its indexes in tps-file 
@@ -98,7 +98,7 @@ def tps_list():
         pathes = fp.readlines()
         for path in pathes:
             dir, filename = os.path.split(path)
-            d = {'dir': os.path.join(config.ROOT_DATA_DIRECTORY,dir[2::]), 
+            d = {'dir': os.path.join(traits_config.ROOT_DATA_DIRECTORY,dir[2::]), 
                     'file' : filename[:len(filename)-1:]
                 }
             tps_files.append(d)          
@@ -169,7 +169,7 @@ def tps_list():
             else:
                 correct_traits_list_count += 1                    
 
-                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in config.TRAITS_KEYS, traits.items())}, index=[0])                        
+                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in traits_config.TRAITS_KEYS, traits.items())}, index=[0])                        
                 df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
                 df_base = pd.DataFrame(
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     print(tps_df.columns)
     
     nrows=5
-    ncols=math.ceil(len(config.TRAITS_KEYS)/nrows)
+    ncols=math.ceil(len(traits_config.TRAITS_KEYS)/nrows)
     
          
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(3*ncols, 3*nrows))
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     i = 0
     j = 0
     
-    for trait in config.TRAITS_KEYS:
+    for trait in traits_config.TRAITS_KEYS:
         st, st_percents = statistics(tps_df, trait)
         print('Absolute counts:\n', st)
         print('In percents:\n',st_percents)

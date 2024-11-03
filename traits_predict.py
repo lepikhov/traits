@@ -83,7 +83,8 @@ def predict(device, models, weights, image):
     result={}
     for t, p in zip(TRAITS_KEYS, predicted_matrix):
         c = Counter(p).most_common()
-        result[t]=(c, TRAITS_KEYS_MAP[t][1][int(c[0][0])]) 
+        #result[t]=(c, TRAITS_KEYS_MAP[t][1][int(c[0][0])], TRAITS_KEYS_MAP[t][0]) 
+        result[t]=(TRAITS_KEYS_MAP[t][0], TRAITS_KEYS_MAP[t][1][int(c[0][0])], c[0][0]) 
         #print(f'{t}->{c}->{c[0][0]}->{TRAITS_KEYS_MAP[t][1][int(c[0][0])]}')
     
     return result        

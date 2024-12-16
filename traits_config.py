@@ -89,3 +89,22 @@ models_weights=[
     '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2024-09-15_23-40/checkpoint-000200.pth',          
     '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2024-09-20_01-08/checkpoint-000100.pth',   
 ]
+
+
+#Traits for different segments
+
+SEGMENTATION_DIRECTORY = './outputs/segmentation/prepare_segments'
+
+TRAITS_HEAD_NECK_KEYS = ['nape', ]
+
+TRAITS_HEAD_NECK_BODY_KEYS = ['head_0', 'withers_0', 'spine_0', 'withers_1', 'rib_cage_0', 'angle_4', ]
+
+TRAITS_REAR_LEG_KEYS = ['hip', 'shin_0', 'tailstock',  'angle_13', 'angle_14', 'angle_15', ]
+
+TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_11', 'angle_12', ]
+
+TRAITS_BODY_KEYS = ['rump', 'spine_3', 'lower_back_0',  'angle_10', ]
+
+TRAITS_BODY_FRONT_LEG_KEYS = ['shoulder', 'falserib_0', 'forearm', 'angle_5', ]
+
+TRAITS_BODY_NECK_KEYS = ['neck_0', 'angle_4', ]

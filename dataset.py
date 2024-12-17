@@ -24,7 +24,7 @@ class AttributesDataset():
             self.falserib_0 = np.unique(df['falserib_0'])
             self.forearm = np.unique(df['forearm']) 
             self.headstock = np.unique(df['headstock'])
-            self.hip = np.unique(df['headstock']) 
+            self.hip = np.unique(df['hip']) 
             self.shin_0 = np.unique(df['shin_0']) 
             self.tailstock = np.unique(df['tailstock']) 
             self.withers_1 = np.unique(df['withers_1']) 

@@ -60,6 +60,7 @@ def copy_image_segments(image, segments, boxes, copy_segments_list, filename, sr
             os.makedirs(prfx_dir+'/'+dir)
     
         im = image.crop(boxes)
+        im.info.pop('icc_profile', None)
         im.save(f'{prfx_dir}/{dir}/{filename}')       
         
         columns = dst_df.columns
@@ -76,10 +77,6 @@ def copy_image_segments(image, segments, boxes, copy_segments_list, filename, sr
      
         
          
-
-
-
-
 def prepare_segments():    
 
     df = data_loading.tps_list() 

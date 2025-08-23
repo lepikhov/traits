@@ -32,20 +32,24 @@ def statistics(df, trait):
     print('')
     print('statistic for ', trait, ':')
     
-    items = df[trait]
+    if trait in df:
+
+        items = df[trait]
     
-    for item in items:
-        if not item in categories:
-            categories.append(item)
-            categories_counters.update({item:1})
-        else:
-            categories_counters[item] += 1
+        for item in items:   
+            if not item in categories:
+                categories.append(item)
+                categories_counters.update({item:1})
+            else:
+                categories_counters[item] += 1
             
     sum = 0
     for item in categories_counters.values():
         sum = sum + item            
-            
-    categories.sort()
+     
+    categories.sort()      
+
+        
     sorted_categories_counters = {i: categories_counters[i] for i in categories}     
     sorted_categories_counters_percents =  {i: 100*categories_counters[i]/sum for i in categories}     
                     
@@ -64,9 +68,23 @@ def check_traits(traits):
             continue
         if key in traits_config.TRAITS_KEYS_SERVICE:        
             continue
+        print('BAD TRAIT NAME: ', key)            
         return False
     
-    return (False, True)[cnt >= len(traits_config.TRAITS_KEYS)]      
+    return (False, True)[cnt >= len(traits_config.TRAITS_KEYS)]     
+
+def check_traits_param(traits, traits_keys = traits_config.TRAITS_KEYS):
+    cnt = 0
+
+    for key in traits:
+        cnt += 1
+        if key in traits_keys:
+            continue 
+        print('BAD TRAIT NAME: ', key)            
+        return False
+    
+    return True   
+    
     
 # help-function for search patterns like 'IMAGE', 'LM', etc
 # and its indexes in tps-file 
@@ -89,7 +107,7 @@ def comma_float(s):
   except:
     return np.NaN 
 
-def tps_list():
+def tps_list(traits_keys = traits_config.TRAITS_KEYS):
 
     os.system('./tree_script.sh')
 
@@ -120,8 +138,13 @@ def tps_list():
         dir = file['dir']
         file_name = os.path.join(dir,file['file'])
 
-        with open(file_name, encoding="cp1251") as file:
-            lines=file.readlines()
+        try:
+            with open(file_name, encoding=traits_config.TPS_ENCODING) as file:        
+                lines=file.readlines()
+        except:
+            with open(file_name, encoding=traits_config.ALTERNATIVE_TPS_ENCODING) as file:        
+                lines=file.readlines()     
+                                       
         images, _ = search('IMAGE',lines)
         #ids, _ = search('ID',lines)
         lm, lmixs = search('LM',lines)
@@ -162,14 +185,15 @@ def tps_list():
                 pass
                 #print('bad traits strings for:', imagefile, ':' , traits_strings)
                                 
-            if not check_traits(traits):
+            if not check_traits_param(traits, traits_keys = traits_keys):
                print(file_name,'| img:', imagefile, '| wrong traits list')  
                print(traits)
                wrong_traits_list_count += 1 
+               break
             else:
                 correct_traits_list_count += 1                    
 
-                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in traits_config.TRAITS_KEYS, traits.items())}, index=[0])                        
+                df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in traits_keys, traits.items())}, index=[0])                        
                 df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
                 df_base = pd.DataFrame(
@@ -235,12 +259,15 @@ def addlabels(axes, i, j, x, y):
        
 
 if __name__ == "__main__":
-    tps_df=tps_list()    
+
+    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+
+    tps_df=tps_list(t_k)    
     print(tps_df.head(31))
     print(tps_df.columns)
     
-    nrows=5
-    ncols=math.ceil(len(traits_config.TRAITS_KEYS)/nrows)
+    ncols=2
+    nrows=math.ceil(len(t_k)/ncols)
     
          
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(3*ncols, 3*nrows))
@@ -250,12 +277,13 @@ if __name__ == "__main__":
     i = 0
     j = 0
     
-    for trait in traits_config.TRAITS_KEYS:
+    for trait in t_k:
         st, st_percents = statistics(tps_df, trait)
         print('Absolute counts:\n', st)
         print('In percents:\n',st_percents)
     
-        axes[i,j].set_xlim(0, 4)
+        
+        axes[i,j].set_xlim(0, (4,6)[trait=='type'])
         axes[i,j].set_ylim(0, 100)
         axes[i,j].set_title(f'{trait}')
         cat = list(st_percents.keys())

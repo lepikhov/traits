@@ -11,7 +11,12 @@ import traits_config
 sys.path.append('../keypoints-for-entire-image')
 import predict
 
-
+def clear_area(image, clr_area):
+    replacement_color = (255, 255, 255) # RGB for white
+    replacement_area = Image.new("RGB", (clr_area[2]-clr_area[0], clr_area[3]-clr_area[1]), color = replacement_color)
+    image.paste(replacement_area, (clr_area[0], clr_area[1]))  
+    return image
+    
 
 def merge_segments(merge_list, boxes, segments):
     
@@ -44,7 +49,7 @@ def merge_segments(merge_list, boxes, segments):
     return [x1,y1,x2,y2]             
 
 
-def copy_image_segments(image, segments, boxes, copy_segments_list, filename, src_df, dst_df, idx):
+def copy_image_segments(image, segments, boxes, copy_segments_list, filename, src_df, dst_df, idx, clr_area):
     
     boxes = merge_segments(copy_segments_list, boxes, segments)           
     
@@ -58,8 +63,14 @@ def copy_image_segments(image, segments, boxes, copy_segments_list, filename, sr
     
         if not os.path.exists(prfx_dir+'/'+dir):
             os.makedirs(prfx_dir+'/'+dir)
+            
+        if clr_area is not None:
+            image = clear_area(image, clr_area)            
     
         im = image.crop(boxes)
+        
+
+            
         im.info.pop('icc_profile', None)
         im.save(f'{prfx_dir}/{dir}/{filename}')       
         
@@ -79,7 +90,9 @@ def copy_image_segments(image, segments, boxes, copy_segments_list, filename, sr
          
 def prepare_segments():    
 
-    df = data_loading.tps_list() 
+    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+    
+    df = data_loading.tps_list(t_k) 
     
     df_traits_head_neck = pd.DataFrame(columns=['id','imagedir','imagefile'] + traits_config.TRAITS_HEAD_NECK_KEYS)
     df_traits_head_neck_body = pd.DataFrame(columns=['id', 'imagedir','imagefile'] + traits_config.TRAITS_HEAD_NECK_BODY_KEYS)
@@ -108,19 +121,24 @@ def prepare_segments():
         
         filename = str(idx)+'.png'
         df_traits_head_neck = copy_image_segments(image, segments, boxes, ['Head', 'Neck'], filename, 
-                                                  df, df_traits_head_neck, idx)
+                                                  df, df_traits_head_neck, idx, None)
         df_traits_head_neck_body = copy_image_segments(image, segments, boxes, ['Head', 'Neck', 'Body'], filename, 
-                                                       df, df_traits_head_neck_body, idx)
+                                                       df, df_traits_head_neck_body, idx, None)
         df_traits_rear_leg = copy_image_segments(image, segments, boxes, ['Rear leg'], filename, 
-                                                 df, df_traits_rear_leg, idx)
+                                                 df, df_traits_rear_leg, idx, None)
         df_traits_front_leg = copy_image_segments(image, segments, boxes, ['Front leg'], filename, 
-                                                  df, df_traits_front_leg, idx)
+                                                  df, df_traits_front_leg, idx, None)
+        try:
+            clr_area = boxes[segments.index('Rear leg')]
+        except:
+            clr_area = None             
         df_traits_body = copy_image_segments(image, segments, boxes, ['Body', 'Front leg'], filename, 
-                                             df, df_traits_body, idx)
+                                             df, df_traits_body, idx, clr_area)
+        
         df_traits_body_front_leg = copy_image_segments(image, segments, boxes, ['Body', 'Neck'], filename, 
-                                                       df, df_traits_body_front_leg, idx)
+                                                       df, df_traits_body_front_leg, idx, None)
         df_traits_body_neck = copy_image_segments(image, segments, boxes, ['Body'], filename,
-                                                   df, df_traits_body_neck, idx)
+                                                   df, df_traits_body_neck, idx, None)
         if not idx%50:
             percents = idx/len(df)
             print(f'index: {idx}, ready: {percents:.2%}')        

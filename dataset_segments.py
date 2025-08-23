@@ -28,15 +28,15 @@ class AttributesDataset():
                     self.rib_cage_0 = np.unique(df['rib_cage_0'])  
                     self.angle_4 = np.unique(df['angle_4'])                                        
                 case 'Rear leg': 
-                    self.hip = np.unique(df['hip'])
+                    #self.hip = np.unique(df['hip'])
                     self.shin_0 = np.unique(df['shin_0']) 
                     self.tailstock = np.unique(df['tailstock'])   
                     self.angle_13 = np.unique(df['angle_13']) 
-                    self.angle_14 = np.unique(df['angle_14']) 
+                    #self.angle_14 = np.unique(df['angle_14']) 
                     self.angle_15 = np.unique(df['angle_15'])                                      
                 case 'Front leg':
                     self.headstock = np.unique(df['headstock'])
-                    self.angle_11 = np.unique(df['angle_11']) 
+                    #self.angle_11 = np.unique(df['angle_11']) 
                     self.angle_12 = np.unique(df['angle_12'])                     
                 case 'Body':        
                     self.rump = np.unique(df['rump'])    

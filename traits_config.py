@@ -1,13 +1,23 @@
-ROOT_DATA_DIRECTORY ="/home/pavel/projects/horses/soft/python/morphometry/datasets/2024/traits" #path to dataset
+#ROOT_DATA_DIRECTORY ="/home/pavel/projects/horses/soft/python/morphometry/datasets/2024/traits" #path to dataset
+ROOT_DATA_DIRECTORY ="/home/pavel/projects/horses/soft/python/morphometry/datasets/2025/new_photo_by_kalinkina" #path to dataset
 
+TPS_ENCODING = "utf8"
+ALTERNATIVE_TPS_ENCODING = "cp1251"
+
+#TRAITS_KEYS = ['head_0', 'nape', 'neck_0', 'withers_0', 'shoulder', 
+#               'spine_0', 'rump', 'falserib_0', 'forearm', 'headstock', 
+#               'hip', 'shin_0', 'tailstock', 'withers_1', 'spine_3', 
+#               'lower_back_0', 'rib_cage_0', 'angle_4', 'angle_5', 
+#               'angle_10', 'angle_11', 'angle_12', 'angle_13', 
+#               'angle_14', 'angle_15'
 
 
 TRAITS_KEYS = ['head_0', 'nape', 'neck_0', 'withers_0', 'shoulder', 
                'spine_0', 'rump', 'falserib_0', 'forearm', 'headstock', 
-               'hip', 'shin_0', 'tailstock', 'withers_1', 'spine_3', 
+               'shin_0', 'tailstock', 'withers_1', 'spine_3', 
                'lower_back_0', 'rib_cage_0', 'angle_4', 'angle_5', 
-               'angle_10', 'angle_11', 'angle_12', 'angle_13', 
-               'angle_14', 'angle_15'
+               'angle_10', 'angle_12', 'angle_13', 
+               'angle_15'
             ]
 
 TRAITS_KEYS_MAP = {
@@ -99,9 +109,11 @@ TRAITS_HEAD_NECK_KEYS = ['nape', ]
 
 TRAITS_HEAD_NECK_BODY_KEYS = ['head_0', 'withers_0', 'spine_0', 'withers_1', 'rib_cage_0', 'angle_4', ]
 
-TRAITS_REAR_LEG_KEYS = ['hip', 'shin_0', 'tailstock',  'angle_13', 'angle_14', 'angle_15', ]
+#TRAITS_REAR_LEG_KEYS = ['hip', 'shin_0', 'tailstock',  'angle_13', 'angle_14', 'angle_15', ]
+TRAITS_REAR_LEG_KEYS = ['shin_0', 'tailstock',  'angle_13', 'angle_15', ]
 
-TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_11', 'angle_12', ]
+#TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_11', 'angle_12', ]
+TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_12', ]
 
 TRAITS_BODY_KEYS = ['rump', 'spine_3', 'lower_back_0',  'angle_10', ]
 

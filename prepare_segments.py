@@ -12,6 +12,7 @@ sys.path.append('../keypoints-for-entire-image')
 import predict
 
 def clear_area(image, clr_area):
+    
     replacement_color = (255, 255, 255) # RGB for white
     replacement_area = Image.new("RGB", (clr_area[2]-clr_area[0], clr_area[3]-clr_area[1]), color = replacement_color)
     image.paste(replacement_area, (clr_area[0], clr_area[1]))  

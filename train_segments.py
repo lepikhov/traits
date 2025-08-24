@@ -8,11 +8,11 @@ from dataset_segments import TraitsDataset, AttributesDataset
 import pandas as pd
 
 from models.mobilenet_segments import MultiOutputModel_Mobilenet
-from models.resnet import MultiOutputModel_Resnet
-from models.squeezenet import MultiOutputModel_Squeezenet
-from models.harmonicnet import MultiOutputModel_Harmonicnet
-from models.efficientnet import MultiOutputModel_Efficientnet
-from models.vitnet import MultiOutputModel_Vitnet
+from models.resnet_segments import MultiOutputModel_Resnet
+from models.squeezenet_segments import MultiOutputModel_Squeezenet
+from models.harmonicnet_segments import MultiOutputModel_Harmonicnet
+from models.efficientnet_segments import MultiOutputModel_Efficientnet
+from models.vitnet_segments import MultiOutputModel_Vitnet
 
 from test_segments import calculate_metrics, validate #, visualize_grid
 from torch.utils.data import DataLoader
@@ -31,7 +31,6 @@ import traits_config
 def plot_loss(loss_list, model_type, color, loss_type, segments):
     plt.figure(figsize=(10, 7))
     plt.plot(loss_list, color=color, label=f'{loss_type} loss for {model_type} ({segments})')
-    #plt.plot(val_loss_list, color='red', label=f'validataion {loss_type} loss')
     plt.xlabel('epochs')
     plt.ylabel('loss')
     plt.legend()
@@ -97,17 +96,17 @@ if __name__ == '__main__':
     batch_size = 16
     num_workers = 8  # number of processes to handle dataset loading
     
-    model_type = 'mobilenet'
+    #model_type = 'mobilenet'
     #model_type = 'resnet'
-    #model_type = 'squeezenet'
+    model_type = 'squeezenet'
     #model_type = 'efficientnet'   
     #model_type = 'harmonicnet'     
     #model_type = 'vitnet' 
     
-    #segments = 'Head Neck'
+    segments = 'Head Neck'
     #segments = 'Head Neck Body'                                             
     #segments = 'Rear leg'                                                
-    segments = 'Front leg'                                                 
+    #segments = 'Front leg'                                                 
     #segments = 'Body'        
     #segments = 'Body Front leg'           
     #segments = 'Body Neck'
@@ -198,21 +197,20 @@ if __name__ == '__main__':
     val_dataset = TraitsDataset(valid_samples, attributes, traits_keys, val_transform)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers ) 
 
- 
          
     match model_type:
         case 'mobilenet':
             model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
         case 'squeezenet':
-            model = MultiOutputModel_Squeezenet(n_classes=attributes, pretrained=True).to(device)
+            model = MultiOutputModel_Squeezenet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
         case 'resnet':    
-            model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True).to(device)
+            model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
         case 'efficientnet':    
-            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True).to(device)   
+            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)   
         case 'harmonicnet':    
-            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True).to(device)         
+            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)         
         case 'vitnet':    
-            model = MultiOutputModel_Vitnet(n_classes=attributes, pretrained=True).to(device)                               
+            model = MultiOutputModel_Vitnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)                               
         case _:
             pass  
      

@@ -1,29 +1,37 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 from traits_config import TRAITS_KEYS
+import models.harmonicnet_impl.models as models
 
+class args_class():
+    def __init__(self):
+        self.arch='resnet50'
+        self.harm_root=True
+        self.harm_res_blocks=True
+        self.pool='avg'
+        self.levels=[None, None, 3, 2]
+            
 
-class MultiOutputModel_Mobilenet(nn.Module):
+class MultiOutputModel_Harmonicnet(nn.Module):
     def __init__(self, n_classes, pretrained=True, segments='', traits_keys=None):
         super().__init__()
 
+        args = args_class()
 
-        self.base_model = models.mobilenet_v2(pretrained=pretrained).features  # take the model without classifier
-        last_channel = models.mobilenet_v2().last_channel  # size of the layer before classifier
         
+        self.base_model= models.__dict__[args.arch](pretrained=pretrained, harm_root=args.harm_root, harm_res_blocks=args.harm_res_blocks, 
+                                           pool=args.pool, levels=args.levels)
+                    
 
-        # the input for the classifier should be two-dimensional, but we will have
-        # [batch_size, channels, width, height]
-        # so, let's do the spatial averaging: reduce width and height to 1
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        last_channel = 2048  # size of the layer before classifier
+        self.base_model.fc = nn.Sequential()
         
         self.traits_keys = traits_keys
         self.segments = segments
-
+                    
         # create separate classifiers for our outputs
-
+        
         match segments:
             case 'Head Neck':    
                 
@@ -156,14 +164,10 @@ class MultiOutputModel_Mobilenet(nn.Module):
                 )  
                                                                            
             case _:
-                pass          
-        
-    def forward(self, x):
-        x = self.base_model(x)
-        x = self.pool(x)
+                pass  
 
-        # reshape from [batch, channels, 1, 1] to [batch, channels] to put it into classifier
-        x = torch.flatten(x, 1)
+    def forward(self, x):
+        x = self.base_model(x)   
         
         match self.segments:
             case 'Head Neck': 
@@ -212,12 +216,12 @@ class MultiOutputModel_Mobilenet(nn.Module):
                 }
             case _:
                 return {}
-                    
 
+    
     def get_loss(self, net_output, ground_truth):
         losses={}
         total_loss=0
         for t in self.traits_keys:
             losses[t] = F.cross_entropy(net_output[t], ground_truth[t])
             total_loss += losses[t]
-        return total_loss, losses
+        return total_loss, losses    

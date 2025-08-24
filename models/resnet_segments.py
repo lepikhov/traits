@@ -5,25 +5,20 @@ import torchvision.models as models
 from traits_config import TRAITS_KEYS
 
 
-class MultiOutputModel_Mobilenet(nn.Module):
+class MultiOutputModel_Resnet(nn.Module):
     def __init__(self, n_classes, pretrained=True, segments='', traits_keys=None):
         super().__init__()
 
+            
+        self.base_model = models.resnet50(pretrained=pretrained) # 
+        last_channel = self.base_model.fc.in_features  #  
+        self.base_model.fc = nn.Sequential()
 
-        self.base_model = models.mobilenet_v2(pretrained=pretrained).features  # take the model without classifier
-        last_channel = models.mobilenet_v2().last_channel  # size of the layer before classifier
-        
-
-        # the input for the classifier should be two-dimensional, but we will have
-        # [batch_size, channels, width, height]
-        # so, let's do the spatial averaging: reduce width and height to 1
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        
         self.traits_keys = traits_keys
         self.segments = segments
 
         # create separate classifiers for our outputs
-
+        
         match segments:
             case 'Head Neck':    
                 
@@ -156,15 +151,11 @@ class MultiOutputModel_Mobilenet(nn.Module):
                 )  
                                                                            
             case _:
-                pass          
-        
-    def forward(self, x):
-        x = self.base_model(x)
-        x = self.pool(x)
+                pass              
 
-        # reshape from [batch, channels, 1, 1] to [batch, channels] to put it into classifier
-        x = torch.flatten(x, 1)
-        
+    def forward(self, x):
+        x = self.base_model(x)     
+
         match self.segments:
             case 'Head Neck': 
                 return {
@@ -212,7 +203,7 @@ class MultiOutputModel_Mobilenet(nn.Module):
                 }
             case _:
                 return {}
-                    
+
 
     def get_loss(self, net_output, ground_truth):
         losses={}

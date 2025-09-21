@@ -167,3 +167,5 @@ external/
 checkpoints/
 logs/
 outputs/
+
+calculation.py

@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from traits_config import TRAITS_KEYS
+
 
 
 class MultiOutputModel_Vitnet(nn.Module):
-    def __init__(self, n_classes, pretrained=True, segments='', traits_keys=None):
+    def __init__(self, n_classes, pretrained=True, segments_type='', traits_keys=None):
         super().__init__()
 
 
@@ -15,11 +15,19 @@ class MultiOutputModel_Vitnet(nn.Module):
         last_channel = 1000
         
         self.traits_keys = traits_keys
-        self.segments = segments
+        self.segments_type = segments_type
         
         # create separate classifiers for our outputs
         
-        match segments:
+        match segments_type:
+            
+            case 'Type': 
+                
+                self.type_expressiveness = nn.Sequential(
+                    nn.Dropout(p=0.2),
+                    nn.Linear(in_features=last_channel, out_features=n_classes.num_type_expressiveness)
+                ) 
+                            
             case 'Head Neck': 
                 
                 self.nape = nn.Sequential(
@@ -157,7 +165,11 @@ class MultiOutputModel_Vitnet(nn.Module):
     def forward(self, x):
         x = self.base_model(x)
 
-        match self.segments:
+        match self.segments_type:
+            case 'Type':
+                return {
+                    'type' : self.type_expressiveness(x),
+                }            
             case 'Head Neck': 
                 return {
                     'nape': self.nape(x),                     
@@ -211,6 +223,6 @@ class MultiOutputModel_Vitnet(nn.Module):
         losses={}
         total_loss=0
         for t in self.traits_keys:
-            losses[t] = F.cross_entropy(net_output[t], ground_truth[t])
+            losses[t] = F.cross_entropy(net_output[t], ground_truth[t], ignore_index=0)
             total_loss += losses[t]
         return total_loss, losses

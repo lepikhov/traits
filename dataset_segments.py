@@ -15,9 +15,13 @@ import pandas as pd
 
 
 class AttributesDataset():
-    def __init__(self, df=None, empty=False, segments=''):
+    def __init__(self, df=None, empty=False, segments_type=''):
+            
+            
         if not empty:
-            match segments:
+            match segments_type:
+                case 'Type':
+                    self.type_expressiveness = np.unique(df['type'])                         
                 case 'Head Neck':
                     self.nape = np.unique(df['nape'])                    
                 case 'Head Neck Body':                    
@@ -54,7 +58,9 @@ class AttributesDataset():
                 case _:
                     pass
 
-        match segments:
+        match segments_type:
+            case 'Type':
+                self.num_type_expressiveness = 6#len(self.type_expressiveness)              
             case 'Head Neck':
                 self.num_nape = 4#len(self.nape)                  
             case 'Head Neck Body':                    
@@ -111,8 +117,8 @@ class TraitsDataset(Dataset):
         filepath = self.df.iloc[idx]['imagedir']        
         filename = self.df.iloc[idx]['imagefile']       
         img_name = os.path.join(filepath, filename)
-            
-        image = cv2.imread(img_name)        
+                        
+        image = cv2.imread(img_name)                
         # If the image is Greyscale convert it to RGB
         #gr, _ = is_gray_scale(image)
         #if gr:
@@ -120,15 +126,19 @@ class TraitsDataset(Dataset):
         image = utils.resize_without_deforming_aspect_ratio(image) # resize without deforming aspect ratio
         
         
+        
+        
+        
+        if transformed_image_to_file:
+            cv2.imwrite(f'./outputs/{filename}', image)  
+            
+
         # apply the image augmentations if needed
-        
-        
+                    
         if self.transform:
             transformed = self.transform(image=image)
             image = transformed['image']    
-            
-        if transformed_image_to_file:
-            cv2.imwrite(f'./outputs/{filename}', image)                  
+                            
 
         labels={}
         for t in self.traits_keys:
@@ -151,6 +161,6 @@ if __name__ == "__main__":
 
     print(len(train_dataset))    
     for i in range(10): #len(train_dataset)):
-        print(i, train_dataset.__getitem__(i, transformed_image_to_file=True))
-    #print(train_dataset.__len__())
-    #print(attributes.angle_4)
+        print(i, train_dataset.__getitem__(i, transformed_image_to_file=True)['labels'])
+    print(train_dataset.__len__())
+    print(attributes.nape)

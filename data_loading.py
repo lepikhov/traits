@@ -107,16 +107,17 @@ def comma_float(s):
   except:
     return np.NaN 
 
-def tps_list(traits_keys = traits_config.TRAITS_KEYS):
+def tps_list(traits_keys = traits_config.TRAITS_KEYS, root_data_directory = traits_config.ROOT_DATA_DIRECTORY):
 
-    os.system('./tree_script.sh')
+    command = './tree_script.sh "'+root_data_directory+'"'
+    os.system(command)
 
     tps_files = []
     with open('filelist.txt') as fp:
         pathes = fp.readlines()
         for path in pathes:
             dir, filename = os.path.split(path)
-            d = {'dir': os.path.join(traits_config.ROOT_DATA_DIRECTORY,dir[2::]), 
+            d = {'dir': os.path.join(root_data_directory,dir[2::]), 
                     'file' : filename[:len(filename)-1:]
                 }
             tps_files.append(d)          
@@ -261,8 +262,14 @@ def addlabels(axes, i, j, x, y):
 if __name__ == "__main__":
 
     t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+    
+    #root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+    #statistics_file_name_suffix =""
+    
+    root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+    statistics_file_name_suffix ="orlovskaya"
 
-    tps_df=tps_list(t_k)    
+    tps_df=tps_list(t_k, root_data_directory = root_data_directory)    
     print(tps_df.head(31))
     print(tps_df.columns)
     
@@ -300,5 +307,5 @@ if __name__ == "__main__":
             if j>=ncols:
                 j=0
                  
-        
-    plt.savefig(f"./outputs/dataset_statistics.png")
+      
+    plt.savefig(f"./outputs/dataset_statistics_{statistics_file_name_suffix}.png")

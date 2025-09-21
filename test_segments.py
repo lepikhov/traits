@@ -30,7 +30,7 @@ def validate(model, dataloader, logger, iteration, device, traits_keys, checkpoi
             img = batch['image']
             target_labels = batch['labels']
             target_labels = {t: target_labels[t].to(device) for t in target_labels}
-            output = model(img.to(device))
+            output = model(img.to(device))            
 
             val_train, val_train_losses = model.get_loss(output, target_labels)
             avg_loss += val_train.item()

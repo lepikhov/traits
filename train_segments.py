@@ -22,24 +22,25 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 import math
+import data_loading
 
 
 
 import traits_config 
 
 # loss plots
-def plot_loss(loss_list, model_type, color, loss_type, segments):
+def plot_loss(loss_list, model_type, color, loss_type, segments_type, additional_info=''):
     plt.figure(figsize=(10, 7))
-    plt.plot(loss_list, color=color, label=f'{loss_type} loss for {model_type} ({segments})')
+    plt.plot(loss_list, color=color, label=f'{loss_type} loss for {model_type} ({segments_type})')
     plt.xlabel('epochs')
     plt.ylabel('loss')
     plt.legend()
     plt.grid()
-    segments=segments.replace(' ','_')
-    plt.savefig(f"./outputs/{segments}_{model_type}_{loss_type}_loss.png")
+    segments_type=segments_type.replace(' ','_')
+    plt.savefig(f"./outputs/{segments_type}_{model_type}_{loss_type}_{additional_info}_loss.png")
     
 # accuracies plots
-def plot_accuracies(accuracies_list, model_type, color, accuracy_type, segments, traits_keys):
+def plot_accuracies(accuracies_list, model_type, color, accuracy_type, segments_type, traits_keys, additional_info=''):
     
     nrows = math.ceil(math.sqrt(len(traits_keys)))
     if nrows<2:
@@ -75,8 +76,8 @@ def plot_accuracies(accuracies_list, model_type, color, accuracy_type, segments,
             if j>=ncols:
                 j = 0
     
-    segments=segments.replace(' ','_')
-    plt.savefig(f"./outputs/{segments}_{model_type}_{accuracy_type}_accuracies.png")
+    segments_type=segments_type.replace(' ','_')
+    plt.savefig(f"./outputs/{segments_type}_{model_type}_{accuracy_type}_{additional_info}_accuracies.png")
 
 
 def get_cur_time():
@@ -96,20 +97,32 @@ if __name__ == '__main__':
     batch_size = 16
     num_workers = 8  # number of processes to handle dataset loading
     
-    #model_type = 'mobilenet'
-    #model_type = 'resnet'
-    model_type = 'squeezenet'
-    #model_type = 'efficientnet'   
-    #model_type = 'harmonicnet'     
-    #model_type = 'vitnet' 
+    wtire_log = False
+    #wtire_log = True
     
-    segments = 'Head Neck'
-    #segments = 'Head Neck Body'                                             
-    #segments = 'Rear leg'                                                
-    #segments = 'Front leg'                                                 
-    #segments = 'Body'        
-    #segments = 'Body Front leg'           
-    #segments = 'Body Neck'
+    save_weights = False
+    #save_weights = True
+
+      
+    model_types = [
+        'mobilenet',
+        'resnet',
+        'squeezenet',
+        'efficientnet',   
+        'harmonicnet',     
+        'vitnet',         
+    ]
+        
+    
+    #segments_type = 'Head Neck'
+    segments_type = 'Head Neck Body'                                             
+    #segments_type = 'Rear leg'                                                
+    #segments_type = 'Front leg'                                                 
+    #segments_type = 'Body'        
+    #segments_type = 'Body Front leg'           
+    #segments_type = 'Body Neck'
+    #segments_type = 'Type'
+    
 
     torch.cuda.empty_cache()
     
@@ -119,8 +132,12 @@ if __name__ == '__main__':
     
     #torch.autograd.set_detect_anomaly(True)
 
-    
-    match segments:
+    match segments_type:
+        case 'Type':
+            t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+            root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+            df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
+            traits_keys = traits_config.TRAITS_TYPE_KEYS
         case 'Head Neck':     
             df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck.json'), orient='table') 
             traits_keys = traits_config.TRAITS_HEAD_NECK_KEYS          
@@ -150,18 +167,17 @@ if __name__ == '__main__':
     
     
     # attributes variable contains labels for the categories in the dataset and mapping between string names and IDs    
-    attributes = AttributesDataset(df, segments=segments)
+    attributes = AttributesDataset(df, segments_type=segments_type)
 
     # specify image transforms for augmentation during training
     train_transform = A.Compose([
         #A.Resize(224, 224),        
         #A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=20, p=0.5),
-        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
         A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
         #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         A.HorizontalFlip(p=0.5),
-        A.RandomBrightnessContrast(p=0.2),
+        #A.RandomBrightnessContrast(p=0.2),
         A.OneOf([
             A.HueSaturationValue(p=0.5),
             A.RGBShift(p=0.7),           
@@ -172,21 +188,22 @@ if __name__ == '__main__':
             A.RandomSunFlare(flare_roi=(0, 0, 1, 0.5), angle_lower=0.5, p=1),     
             A.RandomFog(fog_coef_lower=0.2, fog_coef_upper=0.6, alpha_coef=0.1, p=1),    
         ], p=0.25),
-        A.ToFloat(),
-        ToTensorV2(),
+        A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),           
+        A.ToFloat(),       
+        ToTensorV2(),       
     ])
 
     # during validation we use only tensor and normalization transforms
     val_transform = A.Compose([
         #A.Resize(224, 224),
-        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
+        A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),  
         A.ToFloat(),
-        ToTensorV2(),        
+        ToTensorV2(),                       
     ])
     
     training_samples, valid_samples = model_selection.train_test_split(df, shuffle=True,
                                                                        random_state=None,
-                                                                       test_size=0.2)    
+                                                                       test_size=0.1)    
     
     print('training_samples;', len(training_samples))
     print('valid_samples;', len(valid_samples))
@@ -196,96 +213,112 @@ if __name__ == '__main__':
 
     val_dataset = TraitsDataset(valid_samples, attributes, traits_keys, val_transform)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers ) 
-
-         
-    match model_type:
-        case 'mobilenet':
-            model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
-        case 'squeezenet':
-            model = MultiOutputModel_Squeezenet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
-        case 'resnet':    
-            model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)
-        case 'efficientnet':    
-            model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)   
-        case 'harmonicnet':    
-            model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)         
-        case 'vitnet':    
-            model = MultiOutputModel_Vitnet(n_classes=attributes, pretrained=True, segments=segments, traits_keys=traits_keys).to(device)                               
-        case _:
-            pass  
-     
-
-    optimizer = torch.optim.Adam(model.parameters())
-
-    logdir = os.path.join('./logs/', f'{model_type}-{get_cur_time()}')
-    savedir = os.path.join('./checkpoints/', f'{model_type}-{get_cur_time()}')
-    os.makedirs(logdir, exist_ok=True)
-    os.makedirs(savedir, exist_ok=True)
-    logger = SummaryWriter(logdir)
-
-    n_train_samples = len(train_dataloader)
-
-
-    print("Starting training ...")
     
-    train_loss_list = []
-    train_losses_list = []
-    train_accuracies_list = []
-    val_loss_list = []
-    val_accuracies_list = []    
+    for model_type in model_types: 
+        
+        print(f'Training for model: {model_type}')
+         
+        match model_type:
+            case 'mobilenet':
+                model = MultiOutputModel_Mobilenet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)
+            case 'squeezenet':
+                model = MultiOutputModel_Squeezenet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)
+            case 'resnet':    
+                model = MultiOutputModel_Resnet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)
+            case 'efficientnet':    
+                model = MultiOutputModel_Efficientnet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)   
+            case 'harmonicnet':    
+                model = MultiOutputModel_Harmonicnet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)         
+            case 'vitnet':    
+                model = MultiOutputModel_Vitnet(n_classes=attributes, pretrained=True, segments_type=segments_type, 
+                                                traits_keys=traits_keys).to(device)                               
+            case _:
+                pass  
+        
+        lr =1e-6                    
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
- 
-    for epoch in range(start_epoch, N_epochs + 1):
-        total_loss = 0
-        accuracies = {}
-        for t in traits_keys:
-            accuracies[t] = 0
+        logdir = os.path.join('./logs/', f'{model_type}-{get_cur_time()}')
+        savedir = os.path.join('./checkpoints/', f'{model_type}-{get_cur_time()}')
+        os.makedirs(logdir, exist_ok=True)
+        os.makedirs(savedir, exist_ok=True)
+        logger = SummaryWriter(logdir)
+
+        n_train_samples = len(train_dataloader)
 
 
-        for batch in train_dataloader:
-            optimizer.zero_grad()
+        print("Starting training ...")
+        
+        train_loss_list = []
+        train_losses_list = []
+        train_accuracies_list = []
+        val_loss_list = []
+        val_accuracies_list = []    
 
-            img = batch['image']
-            target_labels = batch['labels']
-            target_labels = {t: target_labels[t].to(device) for t in target_labels}
-            output = model(img.to(device))
-
-            loss_train, losses_train = model.get_loss(output, target_labels)
-            total_loss += loss_train.item()
-            batch_accuracies = calculate_metrics(output, target_labels, traits_keys)
-
+    
+        for epoch in range(start_epoch, N_epochs + 1):
+            total_loss = 0
+            accuracies = {}
             for t in traits_keys:
-                accuracies[t] += batch_accuracies[t]
+                accuracies[t] = 0
 
-            #loss_train.backward(retain_graph=True)
-            loss_train.backward()
-            optimizer.step()
 
-        print(f"epoch {epoch}, loss: {total_loss / n_train_samples}")
-        train_loss_list.append(total_loss / n_train_samples)
-        
-        acc = {}
-        for t in traits_keys:
-            print(f"{t}: {accuracies[t]/n_train_samples}", end='\t')
-            acc[t]=accuracies[t]/n_train_samples
-        print('\n')            
-        
-        train_accuracies_list.append(acc)
-        
+            for batch in train_dataloader:
+                #optimizer.zero_grad()
 
-        logger.add_scalar('train_loss', total_loss / n_train_samples, epoch)
+                img = batch['image']
+                target_labels = batch['labels']
+                target_labels = {t: target_labels[t].to(device) for t in target_labels}
+                output = model(img.to(device))
 
-        l, a = validate(model, val_dataloader, logger, epoch, device, traits_keys)
-        val_loss_list.append(l)
-        val_accuracies_list.append(a)        
-        
-        if epoch % 5 == 0:
-            plot_loss(train_loss_list, model_type, 'orange', 'train', segments=segments)
-            plot_accuracies(train_accuracies_list, model_type, 'green', 'train', segments=segments, traits_keys=traits_keys)
-            plot_loss(val_loss_list, model_type, 'red', 'val', segments=segments)
-            plot_accuracies(val_accuracies_list, model_type, 'blue', 'val', segments=segments, traits_keys=traits_keys)
+                loss_train, losses_train = model.get_loss(output, target_labels)
+                total_loss += loss_train.item()
+                batch_accuracies = calculate_metrics(output, target_labels, traits_keys)
 
-        if epoch % 25 == 0:
-            checkpoint_save(model, savedir, epoch)
+                for t in traits_keys:
+                    accuracies[t] += batch_accuracies[t]
+
+                #loss_train.backward(retain_graph=True)
+                loss_train.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+
+            print(f"epoch {epoch}, loss: {total_loss / n_train_samples}")
+            train_loss_list.append(total_loss / n_train_samples)
+            
+            acc = {}
+            for t in traits_keys:
+                print(f"{t}: {accuracies[t]/n_train_samples}", end='\t')
+                acc[t]=accuracies[t]/n_train_samples
+            print('\n')            
+            
+            train_accuracies_list.append(acc)
+            
+            if wtire_log:
+                logger.add_scalar('train_loss', total_loss / n_train_samples, epoch)
+
+            l, a = validate(model, val_dataloader, logger, epoch, device, traits_keys)
+            val_loss_list.append(l)
+            val_accuracies_list.append(a)        
+            
+            if epoch % 5 == 0:
+                add_info='lr='+str(lr)
+                plot_loss(train_loss_list, model_type, 'orange', 'train', 
+                          segments_type=segments_type, additional_info=add_info)
+                plot_accuracies(train_accuracies_list, model_type, 'green', 'train', 
+                                segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
+                plot_loss(val_loss_list, model_type, 'red', 'val', 
+                          segments_type=segments_type, additional_info=add_info)
+                plot_accuracies(val_accuracies_list, model_type, 'blue', 'val', 
+                                segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
+
+            if save_weights:
+                if epoch % 25 == 0:
+                    checkpoint_save(model, savedir, epoch)
             
             

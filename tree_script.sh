@@ -1,5 +1,4 @@
-#DATASET_DIR='/home/pavel/projects/horses/soft/python/morphometry/datasets/2024/traits'
-DATASET_DIR='/home/pavel/projects/horses/soft/python/morphometry/datasets/2025/new_photo_by_kalinkina'
+DATASET_DIR=$1
 CUR_DIR=`pwd`
 cd $DATASET_DIR
 tree -iFPf '*.tps' --prune | grep tps > filelist.txt

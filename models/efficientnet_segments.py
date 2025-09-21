@@ -2,11 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from traits_config import TRAITS_KEYS
 
 
 class MultiOutputModel_Efficientnet(nn.Module):
-    def __init__(self, n_classes, pretrained=True, segments='', traits_keys=None):
+    def __init__(self, n_classes, pretrained=True, segments_type='', traits_keys=None):
         super().__init__()
 
             
@@ -22,11 +21,16 @@ class MultiOutputModel_Efficientnet(nn.Module):
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
         
         self.traits_keys = traits_keys
-        self.segments = segments        
+        self.segments_type = segments_type        
 
         # create separate classifiers for our outputs
         
-        match segments:
+        match segments_type:
+            case 'Type':        
+                
+                self.type_expressiveness = classifier
+                self.type_expressiveness[1] = nn.Linear(in_features=last_channel, out_features=n_classes.num_type_expressiveness)   
+                           
             case 'Head Neck':        
                 
                 self.nape = classifier
@@ -130,7 +134,12 @@ class MultiOutputModel_Efficientnet(nn.Module):
         for i in range(len(self.traits_keys)):
             y.append(x.clone())           
         
-        match self.segments:
+        match self.segments_type:
+            case 'Type':                                    
+                return {
+                    'type': self.type_expressiveness(y[0]), 
+                } 
+                            
             case 'Head Neck':                                    
                 return {
                     'nape': self.nape(y[0]), 

@@ -1,4 +1,5 @@
 import os
+import sys
 
 import torch
 import torchvision.transforms as transforms
@@ -30,7 +31,7 @@ models_types=[
 
 def checkpoint_load(model, name, verb=False):
     if verb:
-        print('Restoring checkpoint: {}'.format(name))
+        print('Restoring checkpoint: {}'.format(name))      
     model.load_state_dict(torch.load(name, map_location='cpu'))
     epoch = int(os.path.splitext(os.path.basename(name))[0].split('-')[1])
     return epoch
@@ -88,8 +89,7 @@ def predict(device, models, weights, image):
         #print(f'{t}->{c}->{c[0][0]}->{TRAITS_KEYS_MAP[t][1][int(c[0][0])]}')
     
     return result        
-        
-    
+              
 
 
 if __name__ == '__main__':  

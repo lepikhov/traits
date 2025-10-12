@@ -17,7 +17,7 @@ import pandas as pd
 class AttributesDataset():
     def __init__(self, df=None, empty=False, segments_type=''):
             
-            
+        """            
         if not empty:
             match segments_type:
                 case 'Type':
@@ -57,7 +57,7 @@ class AttributesDataset():
                     self.angle_4 = np.unique(df['angle_4'])                   
                 case _:
                     pass
-
+        """
         match segments_type:
             case 'Type':
                 self.num_type_expressiveness = 6#len(self.type_expressiveness)              

@@ -39,6 +39,21 @@ def plot_loss(loss_list, model_type, color, loss_type, segments_type, additional
     segments_type=segments_type.replace(' ','_')
     plt.savefig(f"./outputs/{segments_type}_{model_type}_{loss_type}_{additional_info}_loss.png")
     
+# two losses plots
+def plot_two_losses(loss_list1, color1, loss_type1, 
+                    loss_list2, color2, loss_type2, 
+                    model_type, segments_type, additional_info=''):
+    plt.figure(figsize=(10, 7))
+    plt.plot(loss_list1, color=color1, label=f'{loss_type1}')
+    plt.plot(loss_list2, color=color2, label=f'{loss_type2}')
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.title(f'losses for {model_type} ({segments_type})')
+    plt.legend()
+    plt.grid()
+    segments_type=segments_type.replace(' ','_')
+    plt.savefig(f"./outputs/{segments_type}_{model_type}_{additional_info}_losses.png")    
+    
 # accuracies plots
 def plot_accuracies(accuracies_list, model_type, color, accuracy_type, segments_type, traits_keys, additional_info=''):
     
@@ -80,6 +95,53 @@ def plot_accuracies(accuracies_list, model_type, color, accuracy_type, segments_
     plt.savefig(f"./outputs/{segments_type}_{model_type}_{accuracy_type}_{additional_info}_accuracies.png")
 
 
+# accuracies plots
+def plot_two_accuracies(accuracies_list1, color1, accuracy_type1, 
+                        accuracies_list2, color2, accuracy_type2, 
+                        model_type, segments_type, traits_keys, additional_info=''):
+    
+    nrows = math.ceil(math.sqrt(len(traits_keys)))
+    if nrows<2:
+        nrows = 2
+    ncols = math.ceil(len(traits_keys)/nrows)
+    if ncols<2:
+        ncols = 2
+    
+         
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6*ncols, 3*nrows))
+    fig.tight_layout(pad=5.0)
+    
+
+    i = 0
+    j = 0
+    
+    for trait in traits_keys:
+        
+        val1=[]
+        val2=[]
+        for item in accuracies_list1:
+            val1.append(item[trait])
+        for item in accuracies_list2:
+            val2.append(item[trait])            
+        axes[i,j].set_title(f'{trait}')
+        axes[i,j].set_xlabel('epochs')
+        axes[i,j].set_ylabel('accuracy')
+        axes[i,j].plot(val1, color=color1, label=f'{accuracy_type1}')
+        axes[i,j].plot(val2, color=color2, label=f'{accuracy_type2}')
+        axes[i,j].grid()
+        axes[i,j].legend()
+        
+        
+        i += 1
+        if i>=nrows:
+            i = 0
+            j += 1
+            if j>=ncols:
+                j = 0
+    
+    segments_type=segments_type.replace(' ','_')
+    plt.savefig(f"./outputs/{segments_type}_{model_type}_{additional_info}_accuracies.png")
+
 def get_cur_time():
     return datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M')
 
@@ -100,8 +162,14 @@ if __name__ == '__main__':
     wtire_log = False
     #wtire_log = True
     
-    save_weights = False
-    #save_weights = True
+    #save_weights = False
+    save_weights = True
+    
+    #do_plot = False
+    do_plot = True
+    
+    #do_plot_two = False
+    do_plot_two = True    
 
       
     model_types = [
@@ -115,13 +183,13 @@ if __name__ == '__main__':
         
     
     #segments_type = 'Head Neck'
-    segments_type = 'Head Neck Body'                                             
+    #segments_type = 'Head Neck Body'                                             
     #segments_type = 'Rear leg'                                                
     #segments_type = 'Front leg'                                                 
     #segments_type = 'Body'        
     #segments_type = 'Body Front leg'           
     #segments_type = 'Body Neck'
-    #segments_type = 'Type'
+    segments_type = 'Type'
     
 
     torch.cuda.empty_cache()
@@ -171,13 +239,9 @@ if __name__ == '__main__':
 
     # specify image transforms for augmentation during training
     train_transform = A.Compose([
-        #A.Resize(224, 224),        
-        #A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=20, p=0.5),
         A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-        #A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         A.HorizontalFlip(p=0.5),
-        #A.RandomBrightnessContrast(p=0.2),
         A.OneOf([
             A.HueSaturationValue(p=0.5),
             A.RGBShift(p=0.7),           
@@ -195,7 +259,6 @@ if __name__ == '__main__':
 
     # during validation we use only tensor and normalization transforms
     val_transform = A.Compose([
-        #A.Resize(224, 224),
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),  
         A.ToFloat(),
         ToTensorV2(),                       
@@ -240,14 +303,20 @@ if __name__ == '__main__':
             case _:
                 pass  
         
-        lr =1e-6                    
+        lr =3.e-6                   
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
-        logdir = os.path.join('./logs/', f'{model_type}-{get_cur_time()}')
-        savedir = os.path.join('./checkpoints/', f'{model_type}-{get_cur_time()}')
-        os.makedirs(logdir, exist_ok=True)
-        os.makedirs(savedir, exist_ok=True)
-        logger = SummaryWriter(logdir)
+        if wtire_log:
+            logdir = os.path.join('./logs/', f'{model_type}-{get_cur_time()}')
+            os.makedirs(logdir, exist_ok=True)
+            logger = SummaryWriter(logdir)
+        else:
+            logger = None            
+
+        if save_weights:
+            savedir = os.path.join('./checkpoints/', f'{model_type}-{get_cur_time()}')
+            os.makedirs(savedir, exist_ok=True)
+        
 
         n_train_samples = len(train_dataloader)
 
@@ -308,14 +377,25 @@ if __name__ == '__main__':
             
             if epoch % 5 == 0:
                 add_info='lr='+str(lr)
-                plot_loss(train_loss_list, model_type, 'orange', 'train', 
-                          segments_type=segments_type, additional_info=add_info)
-                plot_accuracies(train_accuracies_list, model_type, 'green', 'train', 
-                                segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
-                plot_loss(val_loss_list, model_type, 'red', 'val', 
-                          segments_type=segments_type, additional_info=add_info)
-                plot_accuracies(val_accuracies_list, model_type, 'blue', 'val', 
-                                segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
+                
+                if do_plot:
+                    plot_loss(train_loss_list, model_type, 'orange', 'train', 
+                            segments_type=segments_type, additional_info=add_info)               
+                    plot_accuracies(train_accuracies_list, model_type, 'green', 'train', 
+                                    segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
+                    plot_loss(val_loss_list, model_type, 'red', 'val', 
+                            segments_type=segments_type, additional_info=add_info)
+                    plot_accuracies(val_accuracies_list, model_type, 'blue', 'val', 
+                                    segments_type=segments_type, traits_keys=traits_keys, additional_info=add_info)
+
+                
+                if do_plot_two:
+                    plot_two_losses(train_loss_list, 'orange', 'train', val_loss_list, 'red', 'val',
+                                    model_type, segments_type=segments_type, additional_info=add_info)                     
+                    plot_two_accuracies(train_accuracies_list, 'green', 'train', 
+                                        val_accuracies_list, 'blue', 'val',
+                                        model_type, segments_type=segments_type, 
+                                        traits_keys=traits_keys, additional_info=add_info)
 
             if save_weights:
                 if epoch % 25 == 0:

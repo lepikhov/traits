@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+#from focal_loss.focal_loss import FocalLoss
 
 
 
@@ -231,6 +232,11 @@ class MultiOutputModel_Mobilenet(nn.Module):
         total_loss=0
                    
         for t in self.traits_keys:                             
+                #weights = torch.FloatTensor([0.01, 1/0.14, 1/0.63, 1/0.23]).to(ground_truth[t].device)
+                #weights = torch.FloatTensor([0.01, 1/0.0627, 1/0.4495, 1/0.2578, 1/0.1672, 1/0.0627]).to(ground_truth[t].device)
+                #m = torch.nn.Softmax(dim=-1)
+                #losses[t] = FocalLoss(gamma=0.7, weights = weights)(m((net_output[t])), ground_truth[t])
+                #losses[t] = F.cross_entropy(m((net_output[t])), ground_truth[t]) 
                 losses[t] = F.cross_entropy(net_output[t], ground_truth[t], ignore_index=0)                
                 total_loss += losses[t]
         return total_loss, losses

@@ -47,6 +47,9 @@ TRAITS_KEYS_MAP = {
     'angle_13':("скакательный сустав", ['не известно', 'саблистый', 'нормальный', 'прямой']),
     'angle_14':("задняя бабка (угол 14)", ['не известно', 'мягкая', 'нормальная', 'торцовая']),
     'angle_15':("задняя бабка (угол 15)", ['не известно', 'мягкая','нормальная', 'торцовая']),
+    'type':("выраженность типа", ['не известно', 'отлично выраженный', 'хорошо выраженный', 
+                                       'удовлетворительно выраженный', 'недостаточно выраженный', 'невыраженный']
+            ),
 }
 
 """
@@ -111,8 +114,8 @@ TRAITS_HEAD_NECK_KEYS = ['nape', ]
 TRAITS_HEAD_NECK_BODY_KEYS = ['head_0', 'withers_0', 'spine_0', 'withers_1', 'rib_cage_0', 'angle_4', ]
 
 #TRAITS_REAR_LEG_KEYS = ['hip', 'shin_0', 'tailstock',  'angle_13', 'angle_14', 'angle_15', ]
-#TRAITS_REAR_LEG_KEYS = ['shin_0', 'tailstock',  'angle_13', 'angle_15', ]
-TRAITS_REAR_LEG_KEYS = ['angle_15', ]
+TRAITS_REAR_LEG_KEYS = ['shin_0', 'tailstock',  'angle_13', 'angle_15', ]
+#TRAITS_REAR_LEG_KEYS = ['angle_15', ]
 
 #TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_11', 'angle_12', ]
 TRAITS_FRONT_LEG_KEYS = [ 'headstock', 'angle_12', ]
@@ -124,3 +127,77 @@ TRAITS_BODY_FRONT_LEG_KEYS = ['shoulder', 'falserib_0', 'forearm', 'angle_5', ]
 TRAITS_BODY_NECK_KEYS = ['neck_0', 'angle_4', ]
 
 TRAITS_TYPE_KEYS = ['type',]
+
+
+
+models_weights_Head_Neck=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-03_10-37/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-03_10-44/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-03_10-54/checkpoint-000200.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-03_11-01/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-03_11-13/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-03_11-24/checkpoint-000100.pth',   
+]
+
+models_weights_Head_Neck_Body=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-03_13-11/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-03_13-22/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-03_13-35/checkpoint-000200.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-03_13-47/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-03_14-02/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-03_14-17/checkpoint-000100.pth',   
+]
+
+models_weights_Rear_leg=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-03_16-33/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-03_16-40/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-03_16-50/checkpoint-000200.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-03_16-58/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-03_17-10/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-03_17-22/checkpoint-000100.pth',   
+]
+
+models_weights_Front_leg=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-07_10-44/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-07_10-49/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-07_10-58/checkpoint-000200.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-07_11-04/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-07_11-14/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-07_11-25/checkpoint-000100.pth',   
+]
+
+models_weights_Body=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-07_14-10/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-07_14-19/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-07_14-30/checkpoint-000175.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-07_15-19/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-07_15-32/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-07_15-46/checkpoint-000100.pth',   
+]
+
+models_weights_Body_Front_leg=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-07_16-30/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-07_16-39/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-07_16-50/checkpoint-000175.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-07_17-00/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-07_17-13/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-07_17-26/checkpoint-000100.pth',   
+]
+
+models_weights_Body_Neck=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-08_10-39/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-08_10-47/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-08_10-57/checkpoint-000175.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-08_11-05/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-08_11-17/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-08_11-29/checkpoint-000100.pth',   
+]
+
+models_weights_Type=[
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/mobilenet-2025-10-09_10-52/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/resnet-2025-10-09_10-59/checkpoint-000150.pth',   
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/squeezenet-2025-10-09_11-08/checkpoint-000175.pth',     
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/efficientnet-2025-10-09_11-16/checkpoint-000200.pth',
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/harmonicnet-2025-10-09_11-26/checkpoint-000200.pth',          
+    '/home/pavel/projects/horses/soft/python/morphometry/traits/checkpoints/vitnet-2025-10-09_11-36/checkpoint-000100.pth',   
+]

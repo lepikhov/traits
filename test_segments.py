@@ -49,10 +49,10 @@ def validate(model, dataloader, logger, iteration, device, traits_keys, checkpoi
         print(f"{t}: {accuracies[t]}", end='\t')
     print('\n')        
 
-
-    logger.add_scalar('val_loss', avg_loss, iteration)
-    for t in traits_keys:
-        logger.add_scalar(f'val_accuracy_{t}', accuracies[t], iteration)
+    if logger:
+        logger.add_scalar('val_loss', avg_loss, iteration)
+        for t in traits_keys:
+            logger.add_scalar(f'val_accuracy_{t}', accuracies[t], iteration)
 
     model.train()
     

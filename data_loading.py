@@ -107,7 +107,10 @@ def comma_float(s):
   except:
     return np.NaN 
 
-def tps_list(traits_keys = traits_config.TRAITS_KEYS, root_data_directory = traits_config.ROOT_DATA_DIRECTORY):
+def tps_list(traits_keys = traits_config.TRAITS_KEYS, 
+             traits_keys_excluded = [], 
+             with_types = False,
+             root_data_directory = traits_config.ROOT_DATA_DIRECTORY):
 
     command = './tree_script.sh "'+root_data_directory+'"'
     os.system(command)
@@ -148,7 +151,7 @@ def tps_list(traits_keys = traits_config.TRAITS_KEYS, root_data_directory = trai
                                        
         images, _ = search('IMAGE',lines)
         #ids, _ = search('ID',lines)
-        lm, lmixs = search('LM',lines)
+        _, lmixs = search('LM',lines)
         traits_strings, _ = search('COMMENT',lines)
 
 
@@ -186,14 +189,19 @@ def tps_list(traits_keys = traits_config.TRAITS_KEYS, root_data_directory = trai
                 pass
                 #print('bad traits strings for:', imagefile, ':' , traits_strings)
                                 
-            if not check_traits_param(traits, traits_keys = traits_keys):
+            if not check_traits_param(traits, traits_keys = traits_keys + traits_keys_excluded):
                print(file_name,'| img:', imagefile, '| wrong traits list')  
                print(traits)
                wrong_traits_list_count += 1 
                break
             else:
-                correct_traits_list_count += 1                    
-
+                
+                if with_types: 
+                    if not 'type' in traits: 
+                        continue
+                 
+                correct_traits_list_count += 1       
+                                                  
                 df_traits = pd.DataFrame(data={k : v for k,v in filter(lambda t: t[0] in traits_keys, traits.items())}, index=[0])                        
                 df_traits = df_traits.applymap(lambda x: 0 if x == -9 else x)                
 
@@ -209,7 +217,11 @@ def tps_list(traits_keys = traits_config.TRAITS_KEYS, root_data_directory = trai
                 if not (df_traits == 0).any().any():
                     df = df.append(pd.concat([df_base, df_traits], axis=1),
                                     ignore_index=True)    
-            
+                #else:
+                #    print(df_traits)
+                #df = df.append(pd.concat([df_base, df_traits], axis=1),ignore_index=True)  
+                
+                
                 i += 1
         print(file_name, " items:", i)            
 
@@ -260,16 +272,28 @@ def addlabels(axes, i, j, x, y):
        
 
 if __name__ == "__main__":
-
-    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
     
-    #root_data_directory = traits_config.ROOT_DATA_DIRECTORY
-    #statistics_file_name_suffix =""
-    
-    root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
-    statistics_file_name_suffix ="orlovskaya"
+    #with_types = True
+    with_types = False
 
-    tps_df=tps_list(t_k, root_data_directory = root_data_directory)    
+    t_k = traits_config.TRAITS_KEYS 
+    
+    root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+    statistics_file_name_suffix =""
+    
+    t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
+    
+    if with_types:
+        t_k.extend(['type'])
+    else:
+        t_k_ex.extend(['type'])
+        
+    print(t_k)
+    print(t_k_ex)        
+    
+    tps_df=tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
+                    with_types = with_types,
+                    root_data_directory = root_data_directory)    
     print(tps_df.head(31))
     print(tps_df.columns)
     
@@ -290,7 +314,7 @@ if __name__ == "__main__":
         print('In percents:\n',st_percents)
     
         
-        axes[i,j].set_xlim(0, (4,6)[trait=='type'])
+        axes[i,j].set_xlim(-1, (4,6)[trait=='type'])
         axes[i,j].set_ylim(0, 100)
         axes[i,j].set_title(f'{trait}')
         cat = list(st_percents.keys())

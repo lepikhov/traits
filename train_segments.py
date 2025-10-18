@@ -1,5 +1,6 @@
 import os
 import warnings
+import argparse
 from datetime import datetime
 
 import torch
@@ -23,10 +24,29 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 import math
 import data_loading
-
-
-
 import traits_config 
+
+# construct the argument parser
+parser = argparse.ArgumentParser()
+parser.add_argument('--s', '--segments-type', dest='segments_type', default='Type', 
+                    help=''' 
+                    Segment type for train.                    
+                    Must be one of:
+                        'Head Neck'
+                        'Head Neck Body'
+                        'Rear leg'                                                
+                        'Front leg'                                                 
+                        'Body'        
+                        'Body Front leg'           
+                        'Body Neck'
+                        'Type'
+                    '''
+                    )
+
+
+args = vars(parser.parse_args())
+print('USING:')
+print(f"Segment type for train: {args['segments_type']}")
 
 # loss plots
 def plot_loss(loss_list, model_type, color, loss_type, segments_type, additional_info=''):
@@ -181,7 +201,6 @@ if __name__ == '__main__':
         'vitnet',         
     ]
         
-    
     #segments_type = 'Head Neck'
     #segments_type = 'Head Neck Body'                                             
     #segments_type = 'Rear leg'                                                
@@ -189,8 +208,10 @@ if __name__ == '__main__':
     #segments_type = 'Body'        
     #segments_type = 'Body Front leg'           
     #segments_type = 'Body Neck'
-    segments_type = 'Type'
-    
+    #segments_type = 'Type'
+
+
+    segments_type = args['segments_type']
 
     torch.cuda.empty_cache()
     
@@ -202,10 +223,34 @@ if __name__ == '__main__':
 
     match segments_type:
         case 'Type':
-            t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
-            root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
-            df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
+            #t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+            #root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+            #df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
+            
+            #root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+            #statistics_file_name_suffix =""
+
+            #df=data_loading.tps_list(t_k, traits_keys_excluded = traits_config.TRAITS_KEYS_EXCLUDED, 
+            #                         root_data_directory = root_data_directory) 
+
+            t_k = traits_config.TRAITS_KEYS 
+            
+            root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+            statistics_file_name_suffix =""
+            
+            t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
+            
+            t_k.extend(['type'])
+                
+            print(t_k)
+            print(t_k_ex)        
+            
+            df=data_loading.tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
+                            with_types = True,
+                            root_data_directory = root_data_directory)               
+            
             traits_keys = traits_config.TRAITS_TYPE_KEYS
+            
         case 'Head Neck':     
             df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck.json'), orient='table') 
             traits_keys = traits_config.TRAITS_HEAD_NECK_KEYS          
@@ -303,7 +348,7 @@ if __name__ == '__main__':
             case _:
                 pass  
         
-        lr =3.e-6                   
+        lr =1.e-6                   
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
         if wtire_log:

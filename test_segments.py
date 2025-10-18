@@ -5,14 +5,15 @@ import torch
 import torchvision.transforms as transforms
 from dataset import AttributesDataset #, mean, std
 from sklearn.metrics import balanced_accuracy_score
-from traits_config import TRAITS_KEYS, TRAITS_KEYS_MAP, DEVICE, models_weights
+import traits_config 
 import torchvision.transforms as transforms
 
-
+from PIL import Image
 import cv2
 import data_loading
 
 from traits_predict import checkpoint_load, check_predict, predict, models_types, load_models
+from traits_predict_segments import predict_with_segments, predict_type
 
 
 def validate(model, dataloader, logger, iteration, device, traits_keys, checkpoint=None):
@@ -79,13 +80,19 @@ def calculate_metrics(output, target, traits_keys):
 
 if __name__ == '__main__':   
     
-    df = data_loading.tps_list() 
+    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+    root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+    df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
     
     
-    device = torch.device("cuda" if torch.cuda.is_available() and DEVICE == 'cuda' else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() and traits_config.DEVICE == 'cuda' else "cpu")
 
     
     WEAK_ERROR_WEIGHT = 0.7
+    #WEAK_ERROR_WEIGHT = 1.0
+    
+    with_segments = True
+    #with_segments = False 
     
     #sample = 234
     #sample = 432
@@ -94,11 +101,12 @@ if __name__ == '__main__':
     #sample = 555
     #sample = 694
     #sample = 782
-    sample = 700
+    #sample = 700
     #sample = 728
+    sample = 10
     
     errors = {}
-    for t in TRAITS_KEYS:
+    for t in traits_config.TRAITS_KEYS:
         errors[t]=0 
     
     models=load_models(device=device, models_types=models_types)
@@ -107,9 +115,9 @@ if __name__ == '__main__':
     counter=0
     
     #for idx in [100, 200, 300]:    
-    #for idx in range(len(df)):  
-    #for idx in range(100):  
-    for idx in range(sample, sample+1): 
+    for idx in range(len(df)):  
+    #for idx in range(10):  
+    #for idx in range(sample, sample+1): 
         
         counter += 1 
         
@@ -120,8 +128,8 @@ if __name__ == '__main__':
         #if (not 'ACHAL' in image_path):
         #    continue
                  
-        image = cv2.imread(image_path)   
-        cv2.imwrite(f'./outputs/test_{filename}', image)
+        #cv2.imwrite(f'./outputs/test_{filename}', image)
+        
 
                    
         strong_err = 0
@@ -130,13 +138,24 @@ if __name__ == '__main__':
         print(idx)
         print(image_path)
         
-        res=predict(device=device, models=models, weights=models_weights, image=image)
-        #print(res)
         
-        for t in TRAITS_KEYS:
+        if with_segments:
+            image = Image.open(image_path) 
+            res=predict_with_segments(device=device, image=image)
+        else:            
+            image = cv2.imread(image_path)   
+            res=predict(device=device, models=models, weights=traits_config.models_weights, image=image)
+        
+        print(res)
+        
+        for t in traits_config.TRAITS_KEYS:
             real = df.iloc[idx][t]
                 
-            predicted=res[t][2]   
+            try:
+                predicted=res[t][2]   
+            except:
+                print(f'expection: no trait {t} in predicted')
+                predicted=0                
 
             weak_check = check_predict(int(real), predicted, weak=True)
             if not weak_check: 
@@ -154,7 +173,7 @@ if __name__ == '__main__':
                                    
                     
             print(t,':', int(real), predicted, strong_check, weak_check)
-            print(TRAITS_KEYS_MAP[t][0],':',TRAITS_KEYS_MAP[t][1][int(predicted)])                    
+            print(traits_config.TRAITS_KEYS_MAP[t][0],':',traits_config.TRAITS_KEYS_MAP[t][1][int(predicted)])                    
                     
             if weak_err > 3:
                 bad_idxs.append(idx)
@@ -186,6 +205,6 @@ if __name__ == '__main__':
     print('<>' * 36)
     print(f'accuracies on {counter} samples (weak error weight {WEAK_ERROR_WEIGHT}):')        
     for k, v in accuracies.items():
-        print(f'{k} : {TRAITS_KEYS_MAP[k][0]} : {v}') 
-    print(f'mean accuracy (weak error weight {WEAK_ERROR_WEIGHT}):', sum(accuracies.values())/len(TRAITS_KEYS))        
+        print(f'{k} : {traits_config.TRAITS_KEYS_MAP[k][0]} : {v}') 
+    print(f'mean accuracy (weak error weight {WEAK_ERROR_WEIGHT}):', sum(accuracies.values())/len(traits_config.TRAITS_KEYS))        
                  

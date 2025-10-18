@@ -91,9 +91,31 @@ def copy_image_segments(image, segments, boxes, copy_segments_list, filename, sr
          
 def prepare_segments():    
 
-    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+    #t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
     
-    df = data_loading.tps_list(t_k) 
+    #df = data_loading.tps_list(t_k) 
+    
+    #with_types = True
+    with_types = False
+
+    t_k = traits_config.TRAITS_KEYS 
+    
+    root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+    
+    
+    t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
+    
+    if with_types:
+        t_k.extend(['type'])
+    else:
+        t_k_ex.extend(['type'])
+        
+    print(t_k)
+    print(t_k_ex)        
+    
+    df=data_loading.tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
+                    with_types = with_types,
+                    root_data_directory = root_data_directory)    
     
     df_traits_head_neck = pd.DataFrame(columns=['id','imagedir','imagefile'] + traits_config.TRAITS_HEAD_NECK_KEYS)
     df_traits_head_neck_body = pd.DataFrame(columns=['id', 'imagedir','imagefile'] + traits_config.TRAITS_HEAD_NECK_BODY_KEYS)
@@ -105,7 +127,7 @@ def prepare_segments():
     
     segmentation_model, _ = predict.prepare_models()
     
-    for idx in range(len(df)):
+    for idx in range(len(df)):    
         
         
         filepath = df.iloc[idx]['imagedir']        
@@ -114,6 +136,7 @@ def prepare_segments():
 
                  
         image = Image.open(image_path)   
+        #print(image_path)
         #image.save(f'./outputs/segmentation/prepare_segments_{filename}')
         
         

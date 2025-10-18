@@ -118,7 +118,8 @@ class TraitsDataset(Dataset):
         filename = self.df.iloc[idx]['imagefile']       
         img_name = os.path.join(filepath, filename)
                         
-        image = cv2.imread(img_name)                
+        image = cv2.imread(img_name)   
+        #cv2.imwrite(img_name, image)                      
         # If the image is Greyscale convert it to RGB
         #gr, _ = is_gray_scale(image)
         #if gr:

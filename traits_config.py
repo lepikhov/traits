@@ -80,16 +80,9 @@ TRAITS_KEYS_MAP = {
 'angle_15':{'не известно', 'мягкие','нормальные', 'торцовые'},
 """
 
-TRAITS_KEYS_AUX = ['type', 'lower_back_len',]
+TRAITS_KEYS_AUX = ['lower_back_len',]
 
-#TRAITS_KEYS_AUX = ['type', 'lower_back_len',
-#                   'head_0', 'neck_0', 'withers_0', 'shoulder', 
-#               'spine_0', 'rump', 'falserib_0', 'forearm', 'headstock', 
-#               'hip', 'shin_0', 'tailstock', 'withers_1', 'spine_3', 
-#               'lower_back_0', 'rib_cage_0', 'angle_4', 'angle_5', 
-#               'angle_10', 'angle_11', 'angle_12', 'angle_13', 
-#               'angle_14', 'angle_15'
-#                   ]
+TRAITS_KEYS_EXCLUDED = ['hip', 'angle_11', 'angle_14',]
 
 TRAITS_KEYS_SERVICE = ['ID', 'img_name',]
 

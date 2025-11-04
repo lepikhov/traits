@@ -50,12 +50,12 @@ def merge_segments(merge_list, boxes, segments):
     return [x1,y1,x2,y2]             
 
 
-def copy_image_segments(image, segments, boxes, copy_segments_list, filename, src_df, dst_df, idx, clr_area):
+def copy_image_segments(image, segments, boxes, copy_segments_list, filename, src_df, dst_df, idx, clr_area, segmentation_directory):
     
     boxes = merge_segments(copy_segments_list, boxes, segments)           
     
     if not boxes==[]:
-        prfx_dir = traits_config.SEGMENTATION_DIRECTORY
+        prfx_dir = segmentation_directory
         dir=''
         for s in copy_segments_list:
             if len(dir):
@@ -95,20 +95,20 @@ def prepare_segments():
     
     #df = data_loading.tps_list(t_k) 
     
-    #with_types = True
-    with_types = False
+    with_types = True
+    #with_types = False
 
     t_k = traits_config.TRAITS_KEYS 
-    
-    root_data_directory = traits_config.ROOT_DATA_DIRECTORY
-    
-    
     t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
     
     if with_types:
         t_k.extend(['type'])
+        root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+        segmentation_directory = traits_config.SEGMENTATION_DIRECTORY_ORLOVSKAYA
     else:
         t_k_ex.extend(['type'])
+        root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+        segmentation_directory = traits_config.SEGMENTATION_DIRECTORY
         
     print(t_k)
     print(t_k_ex)        
@@ -128,6 +128,7 @@ def prepare_segments():
     segmentation_model, _ = predict.prepare_models()
     
     for idx in range(len(df)):    
+    #for idx in range(1):    
         
         
         filepath = df.iloc[idx]['imagedir']        
@@ -145,24 +146,24 @@ def prepare_segments():
         
         filename = str(idx)+'.png'
         df_traits_head_neck = copy_image_segments(image, segments, boxes, ['Head', 'Neck'], filename, 
-                                                  df, df_traits_head_neck, idx, None)
+                                                  df, df_traits_head_neck, idx, None, segmentation_directory )
         df_traits_head_neck_body = copy_image_segments(image, segments, boxes, ['Head', 'Neck', 'Body'], filename, 
-                                                       df, df_traits_head_neck_body, idx, None)
+                                                       df, df_traits_head_neck_body, idx, None, segmentation_directory )
         df_traits_rear_leg = copy_image_segments(image, segments, boxes, ['Rear leg'], filename, 
-                                                 df, df_traits_rear_leg, idx, None)
+                                                 df, df_traits_rear_leg, idx, None, segmentation_directory )
         df_traits_front_leg = copy_image_segments(image, segments, boxes, ['Front leg'], filename, 
-                                                  df, df_traits_front_leg, idx, None)
+                                                  df, df_traits_front_leg, idx, None, segmentation_directory)
         try:
             clr_area = boxes[segments.index('Rear leg')]
         except:
             clr_area = None             
         df_traits_body = copy_image_segments(image, segments, boxes, ['Body', 'Front leg'], filename, 
-                                             df, df_traits_body, idx, clr_area)
+                                             df, df_traits_body, idx, clr_area, segmentation_directory)
         
         df_traits_body_front_leg = copy_image_segments(image, segments, boxes, ['Body', 'Neck'], filename, 
-                                                       df, df_traits_body_front_leg, idx, None)
+                                                       df, df_traits_body_front_leg, idx, None, segmentation_directory)
         df_traits_body_neck = copy_image_segments(image, segments, boxes, ['Body'], filename,
-                                                   df, df_traits_body_neck, idx, None)
+                                                   df, df_traits_body_neck, idx, None, segmentation_directory)
         if not idx%50:
             percents = idx/len(df)
             print(f'index: {idx}, ready: {percents:.2%}')        
@@ -170,13 +171,13 @@ def prepare_segments():
 
     print(f'ready: 100.00%') 
 
-    df_traits_head_neck.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck.json'), orient='table') 
-    df_traits_head_neck_body.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck_body.json'), orient='table') 
-    df_traits_rear_leg.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_rear_leg.json'), orient='table') 
-    df_traits_front_leg.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_front_leg.json'), orient='table') 
-    df_traits_body.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body.json'), orient='table') 
-    df_traits_body_front_leg.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body_front_leg.json'), orient='table') 
-    df_traits_body_neck.to_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body_neck.json'), orient='table') 
+    df_traits_head_neck.to_json(os.path.join(segmentation_directory ,'df_traits_head_neck.json'), orient='table') 
+    df_traits_head_neck_body.to_json(os.path.join(segmentation_directory ,'df_traits_head_neck_body.json'), orient='table') 
+    df_traits_rear_leg.to_json(os.path.join(segmentation_directory ,'df_traits_rear_leg.json'), orient='table') 
+    df_traits_front_leg.to_json(os.path.join(segmentation_directory ,'df_traits_front_leg.json'), orient='table') 
+    df_traits_body.to_json(os.path.join(segmentation_directory ,'df_traits_body.json'), orient='table') 
+    df_traits_body_front_leg.to_json(os.path.join(segmentation_directory ,'df_traits_body_front_leg.json'), orient='table') 
+    df_traits_body_neck.to_json(os.path.join(segmentation_directory,'df_traits_body_neck.json'), orient='table') 
 
 
 

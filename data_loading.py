@@ -110,7 +110,8 @@ def comma_float(s):
 def tps_list(traits_keys = traits_config.TRAITS_KEYS, 
              traits_keys_excluded = [], 
              with_types = False,
-             root_data_directory = traits_config.ROOT_DATA_DIRECTORY):
+             root_data_directory = traits_config.ROOT_DATA_DIRECTORY,
+             ignore_empty = False):
 
     command = './tree_script.sh "'+root_data_directory+'"'
     os.system(command)
@@ -214,12 +215,12 @@ def tps_list(traits_keys = traits_config.TRAITS_KEYS,
                 )
                 df_base.loc[0,'landmarks'] = ps
 
-                if not (df_traits == 0).any().any():
-                    df = df.append(pd.concat([df_base, df_traits], axis=1),
-                                    ignore_index=True)    
-                #else:
-                #    print(df_traits)
-                #df = df.append(pd.concat([df_base, df_traits], axis=1),ignore_index=True)  
+                if ignore_empty:
+                    df = df.append(pd.concat([df_base, df_traits], axis=1),ignore_index=True)  
+                else:                                        
+                    if not (df_traits == 0).any().any():
+                        df = df.append(pd.concat([df_base, df_traits], axis=1),
+                                        ignore_index=True)    
                 
                 
                 i += 1
@@ -273,27 +274,29 @@ def addlabels(axes, i, j, x, y):
 
 if __name__ == "__main__":
     
-    #with_types = True
-    with_types = False
+    with_types = True
+    #with_types = False
 
     t_k = traits_config.TRAITS_KEYS 
     
-    root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+    
     statistics_file_name_suffix =""
     
     t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
     
     if with_types:
         t_k.extend(['type'])
+        root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
     else:
         t_k_ex.extend(['type'])
-        
+        root_data_directory = traits_config.ROOT_DATA_DIRECTORY
     print(t_k)
     print(t_k_ex)        
     
     tps_df=tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
                     with_types = with_types,
-                    root_data_directory = root_data_directory)    
+                    root_data_directory = root_data_directory,
+                    ignore_empty=False)    
     print(tps_df.head(31))
     print(tps_df.columns)
     

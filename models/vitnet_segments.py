@@ -11,6 +11,7 @@ class MultiOutputModel_Vitnet(nn.Module):
 
 
         self.base_model = models.vit_b_16(pretrained=pretrained)  # take the model 
+        #self.base_model = models.vit_l_16(pretrained=pretrained)  # take the model 
         self.base_model.head = nn.Identity()
         last_channel = 1000
         

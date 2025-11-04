@@ -15,6 +15,8 @@ import data_loading
 from traits_predict import checkpoint_load, check_predict, predict, models_types, load_models
 from traits_predict_segments import predict_with_segments, predict_type
 
+import csv
+import random
 
 def validate(model, dataloader, logger, iteration, device, traits_keys, checkpoint=None):
     if checkpoint is not None:
@@ -80,19 +82,58 @@ def calculate_metrics(output, target, traits_keys):
 
 if __name__ == '__main__':   
     
-    t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
-    root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
-    df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
+    with_segments = True
+    #with_segments = False     
     
+    #t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
+    #root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+    #df = data_loading.tps_list(t_k, root_data_directory=root_data_directory)
+    
+    if with_segments:
+        with_types = True
+        #with_types = False
+
+        t_k = traits_config.TRAITS_KEYS 
+        t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
+    
+        if with_types:
+            t_k.extend(['type'])
+            root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+        else:
+            t_k_ex.extend(['type'])
+            root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+        
+        print(t_k)
+        print(t_k_ex)        
+    
+        df=data_loading.tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
+                        with_types = with_types,
+                        root_data_directory = root_data_directory,
+                        ignore_empty = False)    
+    else:
+
+        t_k = traits_config.TRAITS_KEYS 
+        t_k_ex = ['type', 'lower_back_len']
+    
+        root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
+        #root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+        
+        print(t_k)
+        print(t_k_ex)        
+    
+        df=data_loading.tps_list(traits_keys = t_k, traits_keys_excluded = t_k_ex, 
+                        with_types = False,
+                        root_data_directory = root_data_directory,
+                        ignore_empty = False)           
+        
     
     device = torch.device("cuda" if torch.cuda.is_available() and traits_config.DEVICE == 'cuda' else "cpu")
 
     
-    WEAK_ERROR_WEIGHT = 0.7
+    WEAK_ERROR_WEIGHT = 0.6
     #WEAK_ERROR_WEIGHT = 1.0
     
-    with_segments = True
-    #with_segments = False 
+
     
     #sample = 234
     #sample = 432
@@ -103,21 +144,31 @@ if __name__ == '__main__':
     #sample = 782
     #sample = 700
     #sample = 728
-    sample = 10
+    #sample = 10
+    
+    number_of_samples = 100
+    breed = 'any'
+    #breed = 'orlovskaya'
+    
+    random.seed(42)
+    indxes = random.sample(range(len(df)), number_of_samples)
+    print('indexes: ',indxes)
     
     errors = {}
-    for t in traits_config.TRAITS_KEYS:
+    for t in t_k:
         errors[t]=0 
     
     models=load_models(device=device, models_types=models_types)
     
     bad_idxs=[]
     counter=0
+    log_list=[]
     
     #for idx in [100, 200, 300]:    
-    for idx in range(len(df)):  
-    #for idx in range(10):  
-    #for idx in range(sample, sample+1): 
+    #for idx in range(len(df)):  
+    #for idx in range(50):  
+    #for idx in range(sample, sample+2):
+    for idx in indxes:     
         
         counter += 1 
         
@@ -130,7 +181,7 @@ if __name__ == '__main__':
                  
         #cv2.imwrite(f'./outputs/test_{filename}', image)
         
-
+        log={'path': image_path.replace(root_data_directory,'')}
                    
         strong_err = 0
         weak_err = 0
@@ -139,16 +190,25 @@ if __name__ == '__main__':
         print(image_path)
         
         
-        if with_segments:
-            image = Image.open(image_path) 
-            res=predict_with_segments(device=device, image=image)
+        
+        if with_segments:                      
+            try:
+                image=Image.open(image_path) 
+            except:
+                continue  
+            res=predict_with_segments(device=device, image=image, breed=breed)
+            if with_types:
+                res_type=predict_type(device=device, image=image)
+                res=res | res_type                 
         else:            
-            image = cv2.imread(image_path)   
-            res=predict(device=device, models=models, weights=traits_config.models_weights, image=image)
+            try:
+                image = cv2.imread(image_path) 
+            except:
+                continue                 
+            res=predict(device=device, models=models, weights=traits_config.models_weights, image=image)        
+            print(res)
         
-        print(res)
-        
-        for t in traits_config.TRAITS_KEYS:
+        for t in t_k:
             real = df.iloc[idx][t]
                 
             try:
@@ -157,6 +217,11 @@ if __name__ == '__main__':
                 print(f'expection: no trait {t} in predicted')
                 predicted=0                
 
+            try:
+                int(real)
+            except:                 
+                continue
+                
             weak_check = check_predict(int(real), predicted, weak=True)
             if not weak_check: 
                 weak_err += 1                               
@@ -173,18 +238,25 @@ if __name__ == '__main__':
                                    
                     
             print(t,':', int(real), predicted, strong_check, weak_check)
-            print(traits_config.TRAITS_KEYS_MAP[t][0],':',traits_config.TRAITS_KEYS_MAP[t][1][int(predicted)])                    
+            print(traits_config.TRAITS_KEYS_MAP[t][0],':',traits_config.TRAITS_KEYS_MAP[t][1][int(predicted)])          
+            
+            log[f'{t} (predicted)']=predicted
+            log[f'{t} (real)']=int(real)
                     
             if weak_err > 3:
                 bad_idxs.append(idx)
                                                
-
+        log['weak errors'] = weak_err
+        log['strong errors'] = strong_err
+        
         print(f'number of strong wrong detected traits is: {strong_err}')                
         print(f'number of weak wrong detected traits is: {weak_err}')  
         if (not (counter % 100)):
         #if (True):
             print(f'errors for {counter} samples:\n{errors}') 
             print(f'total sum of errors: {sum(errors.values())}')
+        
+        log_list.append(log)            
 
     print('*' * 72)                          
     if len(bad_idxs):
@@ -206,5 +278,22 @@ if __name__ == '__main__':
     print(f'accuracies on {counter} samples (weak error weight {WEAK_ERROR_WEIGHT}):')        
     for k, v in accuracies.items():
         print(f'{k} : {traits_config.TRAITS_KEYS_MAP[k][0]} : {v}') 
-    print(f'mean accuracy (weak error weight {WEAK_ERROR_WEIGHT}):', sum(accuracies.values())/len(traits_config.TRAITS_KEYS))        
+    print(f'mean accuracy (weak error weight {WEAK_ERROR_WEIGHT}):', sum(accuracies.values())/len(traits_config.TRAITS_KEYS))  
+    
+    #write to csv
+    csv_filename = 'outputs/test.csv'
+
+    fieldnames = list(log_list[0].keys())
+    
+    
+    with open(csv_filename, mode='w', newline='') as file:
+        # Create a DictWriter object
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+
+        # Write the header row
+        writer.writeheader()
+
+        # Write the data rows
+        writer.writerows(log_list)
+    
                  

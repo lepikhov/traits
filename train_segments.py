@@ -182,22 +182,25 @@ if __name__ == '__main__':
     wtire_log = False
     #wtire_log = True
     
-    #save_weights = False
-    save_weights = True
+    save_weights = False
+    #save_weights = True
     
     #do_plot = False
     do_plot = True
     
     #do_plot_two = False
     do_plot_two = True    
+    
+    #segmentation_directory=traits_config.SEGMENTATION_DIRECTORY
+    segmentation_directory=traits_config.SEGMENTATION_DIRECTORY_ORLOVSKAYA
 
       
     model_types = [
-        'mobilenet',
-        'resnet',
-        'squeezenet',
-        'efficientnet',   
-        'harmonicnet',     
+        #'mobilenet',
+        #'resnet',
+        #'squeezenet',
+        #'efficientnet',   
+        #'harmonicnet',     
         'vitnet',         
     ]
         
@@ -218,6 +221,8 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() and traits_config.DEVICE == 'cuda' else "cpu")
 
     print(traits_config.DEVICE, device)
+
+    #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:64"
     
     #torch.autograd.set_detect_anomaly(True)
 
@@ -235,7 +240,7 @@ if __name__ == '__main__':
 
             t_k = traits_config.TRAITS_KEYS 
             
-            root_data_directory = traits_config.ROOT_DATA_DIRECTORY
+            root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
             statistics_file_name_suffix =""
             
             t_k_ex = traits_config.TRAITS_KEYS_EXCLUDED + traits_config.TRAITS_KEYS_SERVICE + traits_config.TRAITS_KEYS_AUX 
@@ -252,25 +257,25 @@ if __name__ == '__main__':
             traits_keys = traits_config.TRAITS_TYPE_KEYS
             
         case 'Head Neck':     
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck.json'), orient='table') 
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_head_neck.json'), orient='table') 
             traits_keys = traits_config.TRAITS_HEAD_NECK_KEYS          
         case 'Head Neck Body':                                                         
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_head_neck_body.json'), orient='table')
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_head_neck_body.json'), orient='table')
             traits_keys = traits_config.TRAITS_HEAD_NECK_BODY_KEYS
         case 'Rear leg':                                                 
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_rear_leg.json'), orient='table')
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_rear_leg.json'), orient='table')
             traits_keys = traits_config.TRAITS_REAR_LEG_KEYS
         case 'Front leg':                                                  
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_front_leg.json'), orient='table')
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_front_leg.json'), orient='table')
             traits_keys = traits_config.TRAITS_FRONT_LEG_KEYS 
         case 'Body':        
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body.json'), orient='table')            
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_body.json'), orient='table')            
             traits_keys = traits_config.TRAITS_BODY_KEYS 
         case 'Body Front leg':             
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body_front_leg.json'), orient='table')
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_body_front_leg.json'), orient='table')
             traits_keys = traits_config.TRAITS_BODY_FRONT_LEG_KEYS 
         case 'Body Neck':                              
-            df = pd.read_json(os.path.join(traits_config.SEGMENTATION_DIRECTORY,'df_traits_body_neck.json'), orient='table')
+            df = pd.read_json(os.path.join(segmentation_directory,'df_traits_body_neck.json'), orient='table')
             traits_keys = traits_config.TRAITS_BODY_NECK_KEYS 
         case _:
             pass    
@@ -348,7 +353,7 @@ if __name__ == '__main__':
             case _:
                 pass  
         
-        lr =1.e-6                   
+        lr =5.e-7                   
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
         if wtire_log:
@@ -383,8 +388,6 @@ if __name__ == '__main__':
 
 
             for batch in train_dataloader:
-                #optimizer.zero_grad()
-
                 img = batch['image']
                 target_labels = batch['labels']
                 target_labels = {t: target_labels[t].to(device) for t in target_labels}

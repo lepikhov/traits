@@ -29,11 +29,11 @@ from prepare_segments import merge_segments, clear_area
 
 
 models_types=[
-    'mobilenet',
-    'resnet',
-    'squeezenet',
-    'efficientnet',   
-    'harmonicnet',     
+    #'mobilenet',
+    #'resnet',
+    #'squeezenet',
+    #'efficientnet',   
+    #'harmonicnet',     
     'vitnet', 
 ]
 
@@ -45,6 +45,16 @@ traits_segments_info=[
     (traits_config.TRAITS_BODY_KEYS, ['Body'], None, traits_config.models_weights_Body),
     (traits_config.TRAITS_BODY_FRONT_LEG_KEYS, ['Body', 'Front leg'], 'Rear leg', traits_config.models_weights_Body_Front_leg),
     (traits_config.TRAITS_BODY_NECK_KEYS, ['Body', 'Neck'], None, traits_config.models_weights_Body_Neck),
+]
+
+traits_segments_info_orlovskaya=[
+    (traits_config.TRAITS_HEAD_NECK_KEYS, ['Head', 'Neck'], None, traits_config.models_weights_Head_Neck_orlovskaya),
+    (traits_config.TRAITS_HEAD_NECK_BODY_KEYS, ['Head', 'Neck', 'Body'], None, traits_config.models_weights_Head_Neck_Body_orlovskaya),
+    (traits_config.TRAITS_REAR_LEG_KEYS, ['Rear leg'], None, traits_config.models_weights_Rear_leg_orlovskaya),
+    (traits_config.TRAITS_FRONT_LEG_KEYS, ['Front leg'], None, traits_config.models_weights_Front_leg_orlovskaya), 
+    (traits_config.TRAITS_BODY_KEYS, ['Body'], None, traits_config.models_weights_Body_orlovskaya),
+    (traits_config.TRAITS_BODY_FRONT_LEG_KEYS, ['Body', 'Front leg'], 'Rear leg', traits_config.models_weights_Body_Front_leg_orlovskaya),
+    (traits_config.TRAITS_BODY_NECK_KEYS, ['Body', 'Neck'], None, traits_config.models_weights_Body_Neck_orlovskaya),
 ]
 
 traits_type_info=(
@@ -114,21 +124,33 @@ def predict_segment(device, models, weights, traits_keys, attributes, segments, 
     
     result={}
     for t, p in zip(traits_keys, predicted_matrix):
+        
+        #if t=='type': # for type use only vinet result
+            #result[t]=(traits_config.TRAITS_KEYS_MAP[t][0], traits_config.TRAITS_KEYS_MAP[t][1][int(p[5])], p[5]) 
+            #print(f'{t}->{p}->{p[5]}->{traits_config.TRAITS_KEYS_MAP[t][1][int(p[5])]}')
+        #else:            
         c = Counter(p).most_common()
         #result[t]=(c, TRAITS_KEYS_MAP[t][1][int(c[0][0])], TRAITS_KEYS_MAP[t][0]) 
-        result[t]=(traits_config.TRAITS_KEYS_MAP[t][0], traits_config.TRAITS_KEYS_MAP[t][1][int(c[0][0])], c[0][0]) 
+        result[t]=(traits_config.TRAITS_KEYS_MAP[t][0], traits_config.TRAITS_KEYS_MAP[t][1][int(c[0][0])], c[0][0])             
         print(f'{t}->{c}->{c[0][0]}->{traits_config.TRAITS_KEYS_MAP[t][1][int(c[0][0])]}')
     
     return result       
 
-def predict_with_segments(device, image): 
+def predict_with_segments(device, image, breed=None): 
     
     segmentation_model, _ = segmentation.prepare_models()
     boxes, segments, _, _  = segmentation.get_segments(segmentation_model, image)
     
     traits={}
     
-    for keys, segs, clear_seg, weights in traits_segments_info:
+    match breed:
+        case 'orlovskaya':
+            info = traits_segments_info_orlovskaya
+        case _:
+            info = traits_segments_info
+
+    
+    for keys, segs, clear_seg, weights in info:
         bxs = merge_segments(segs, boxes, segments) 
         if not bxs==[]:    
             im=image.copy()        
@@ -146,16 +168,6 @@ def predict_with_segments(device, image):
             traits.update(predict_segment(device=device, models=models_types, weights=weights, traits_keys=keys, 
                             attributes=attributes, segments=segs, image=im))
               
-            """
-            im.info.pop('icc_profile', None)
-            fn=''
-            for s in segs:
-                if len(fn):
-                    fn += '_'
-                fn += s.replace(' ','_') 
-            im.save(f'./outputs/predict_{fn}.png')              
-            """  
-
     return traits
 
 def predict_type(device, image): 

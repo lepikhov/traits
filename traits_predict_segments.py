@@ -18,8 +18,11 @@ from models.efficientnet_segments import MultiOutputModel_Efficientnet
 from models.vitnet_segments import MultiOutputModel_Vitnet
 
 from PIL import Image
+import cv2
 import traits_utils as utils
 from collections import Counter
+
+import calculation
 
 sys.path.append('../keypoints-for-entire-image')
 import predict as segmentation
@@ -170,6 +173,21 @@ def predict_with_segments(device, image, breed=None):
               
     return traits
 
+def calculate_traits(device, image, breed=None):     
+    segmentation_model,  keypoints_models = segmentation.prepare_models()
+    #kp, _, _, _, _ = segmentation.predict(segmentation_model, keypoints_models, image)
+    kp, kp_image, _, _, _ = segmentation.predict(segmentation_model, keypoints_models, image, color_convert=True)
+    #print(kp, len(kp))
+    kps_image = utils.draw_keypoints_numbers(kp, kp_image)
+    h, _, _ = kps_image.shape
+    p1, p2 = calculation.get_horizont_line(kp)
+    #print(p1, p2)
+    pt1 = int(p1[0]), h-int(p1[1])
+    pt2 = int(p2[0]), h-int(p2[1])
+    kps_image = cv2.line(kps_image, pt1, pt2, color=(0,0,255), thickness=5)
+    cv2.imwrite("./outputs/__with_keypoints.png", kps_image)
+    return calculation.calculate_traits(kp, draw=True, image=cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR))    
+
 def predict_type(device, image): 
     
     keys, segs, weights = traits_type_info
@@ -188,9 +206,15 @@ if __name__ == '__main__':
     #image_path = '/home/pavel/projects/horses/soft/python/morphometry/datasets/2024/traits/ORLOV0/./2yo/stallion/Зиновий слева.jpg'
     image = Image.open(image_path)   
     
-    print(predict_with_segments(device, image))
-    print(predict_type(device, image))
-
+    #print(predict_with_segments(device, image))
+    #print(predict_type(device, image))
+    
+    calculated_traits = calculate_traits(device, image)
+    
+    print(calculated_traits)
+    
+    
+    
 
     
 

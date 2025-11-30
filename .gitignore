@@ -168,8 +168,10 @@ checkpoints/
 logs/
 outputs/
 
-calculation.py
+#calculation.py
 statistics.txt
 
 yolo/
+tmp/
+
 

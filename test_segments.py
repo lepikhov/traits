@@ -13,7 +13,7 @@ import cv2
 import data_loading
 
 from traits_predict import checkpoint_load, check_predict, predict, models_types, load_models
-from traits_predict_segments import predict_with_segments, predict_type
+from traits_predict_segments import predict_with_segments, predict_type, calculate_traits
 
 import csv
 import random
@@ -83,7 +83,10 @@ def calculate_metrics(output, target, traits_keys):
 if __name__ == '__main__':   
     
     with_segments = True
-    #with_segments = False     
+    #with_segments = False   
+
+    calculate = True
+    #calculate = False  
     
     #t_k = traits_config.TRAITS_KEYS + traits_config.TRAITS_KEYS_AUX
     #root_data_directory = traits_config.ROOT_DATA_DIRECTORY_ORLOVSKAYA
@@ -146,12 +149,13 @@ if __name__ == '__main__':
     #sample = 728
     #sample = 10
     
-    number_of_samples = 100
-    breed = 'any'
-    #breed = 'orlovskaya'
+    number_of_samples = 1
+    #breed = 'any'
+    breed = 'orlovskaya'
     
     random.seed(42)
     indxes = random.sample(range(len(df)), number_of_samples)
+    indxes = [334]
     print('indexes: ',indxes)
     
     errors = {}
@@ -190,8 +194,14 @@ if __name__ == '__main__':
         print(image_path)
         
         
-        
-        if with_segments:                      
+        if calculate:
+            try:
+                image=Image.open(image_path) 
+            except:
+                continue  
+            res=calculate_traits(device=device, image=image, breed=breed)      
+            print(res)      
+        elif with_segments:                      
             try:
                 image=Image.open(image_path) 
             except:
@@ -199,7 +209,8 @@ if __name__ == '__main__':
             res=predict_with_segments(device=device, image=image, breed=breed)
             if with_types:
                 res_type=predict_type(device=device, image=image)
-                res=res | res_type                 
+                res=res | res_type    
+                print(res)              
         else:            
             try:
                 image = cv2.imread(image_path) 
@@ -212,7 +223,10 @@ if __name__ == '__main__':
             real = df.iloc[idx][t]
                 
             try:
-                predicted=res[t][2]   
+                if calculate:
+                    predicted=res[t]
+                else:                    
+                    predicted=res[t][2]   
             except:
                 print(f'expection: no trait {t} in predicted')
                 predicted=0                

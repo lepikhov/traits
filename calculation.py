@@ -3,9 +3,13 @@ from collections import Counter
 from traits_utils import draw_points_and_lines
 import cv2
 import numpy as np
+from convexity import curve_convexity_metric_6_points
 
 DEBUG = True
 #DEBUG = False
+
+#coef = 0
+coef = 1
 
 
 def debug_print(*args):
@@ -44,9 +48,9 @@ def trait_from_angle(p1, p2, p3, p4, threshold, adjacent=False, coef1=0.0, coef2
     debug_print(angl)
     
     if (angl < threshold*(1-coef1)):
-        trait = 3
-    elif (angl > threshold*(1+coef2)):
         trait = 1
+    elif (angl > threshold*(1+coef2)):
+        trait = 3
     else:
         trait = 2     
     return trait    
@@ -333,9 +337,9 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:
         
-        neck_k = 0.02
-        body_k = 0.02
-        rump_k = 0.02
+        neck_k = 0.02*coef
+        body_k = 0.02*coef
+        rump_k = 0.02*coef
         
         v_head = make_vector([keypoints[0][0],keypoints[0][1]], [keypoints[7][0],keypoints[7][1]])
         v_neck = make_vector([keypoints[7][0],keypoints[7][1]], [keypoints[65][0],keypoints[65][1]])
@@ -366,7 +370,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:
         
-        forehead_k = 0.02
+        forehead_k = 0.02*coef
         
         v_nape = make_vector([keypoints[7][0],keypoints[7][1]], [keypoints[8][0],keypoints[8][1]])
         v_forehead = make_vector([keypoints[4][0],keypoints[4][1]], [keypoints[5][0],keypoints[5][1]])    
@@ -388,7 +392,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:
         
-        body_k = 0.02
+        body_k = 0.02*coef
         
         v_neck = make_vector([keypoints[7][0],keypoints[7][1]], [keypoints[65][0],keypoints[65][1]])
         v_body = make_vector([keypoints[18][0],keypoints[18][1]], [keypoints[45][0],keypoints[45][1]])    
@@ -410,7 +414,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:
         
-        angle_4_k = 0.02
+        angle_4_k = 0.02*coef
 
         v_horse = make_vector([keypoints[6][0],keypoints[6][1]], [keypoints[63][0],keypoints[63][1]])
         diff_y = (keypoints[64][1]-keypoints[45][1])/(get_len(v_horse)+0.001)
@@ -469,7 +473,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         elif ratio < low_withers_threshold:
             traits['withers_1'] = 2
         else:
-            traits['withers_1'] = 2                                   
+            traits['withers_1'] = 3                                   
         
         if draw:
             points = get_points(keypoints, [11, 12])
@@ -485,18 +489,29 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         traits['shoulder'] = 0
 
     else:        
-        shoulder_k = 0.02
+        shoulder_k = 0.01*coef
         
-        v_shoulder = make_vector([keypoints[11][0],keypoints[11][1]], [keypoints[45][0],keypoints[45][1]])
-        v_perpendicular = make_vector([keypoints[45][0],keypoints[45][1]], [keypoints[48][0],keypoints[48][1]])    
+        v_shoulder = make_vector([keypoints[11][0],keypoints[11][1]], [keypoints[45][0],keypoints[45][1]])  
+        perpendicular_point = (keypoints[45][0],keypoints[45][1]-get_len(v_shoulder))
         
-        debug_print(v_shoulder, v_perpendicular)
+        debug_print(v_shoulder, perpendicular_point)
+        
+        ratio = 100*abs(perpendicular_point[1]-keypoints[48][1])/(get_len(v_shoulder) + 1e-6)
+        print(ratio)
+        
+        if ratio <= shoulder_k:
+            traits['shoulder'] = 2
+        elif perpendicular_point[1] < keypoints[48][1]:
+            traits['shoulder'] = 1          
+        else:
+            traits['shoulder'] = 3               
            
-        traits['shoulder'] = trait_from_two_vectors(v_shoulder, v_perpendicular, 1.0, shoulder_k, shoulder_k)
         
         if draw:
             points = get_points(keypoints, [11, 45, 48])
-            lines = get_lines(keypoints, [(11, 45), (45, 48)])
+            points.append((perpendicular_point[0], perpendicular_point[1],  'p'))
+            lines = get_lines(keypoints, [(11, 45)])
+            lines.append([(keypoints[45][0],keypoints[45][1]),(perpendicular_point[0], perpendicular_point[1])])
             draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_shoulders.png')          
 
 
@@ -508,7 +523,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:                     
         
-        angle_5_k = 0.02
+        angle_5_k = 0.02*coef
         
         traits['angle_5']=trait_from_angle(horizont_line[0], horizont_line[1], 
                                            (keypoints[11][0],keypoints[11][1]), 
@@ -519,7 +534,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
             points = get_points(keypoints, [11, 45])
             lines = get_lines(keypoints, [(11, 45)])
             lines.append(horizont_line)
-            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[11][0], keypoints[11][1]))  
+            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[45][0], keypoints[45][1]))  
             lines.append(aux_line)
             draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_angle_5.png')   
     
@@ -535,7 +550,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:      
     
-        spine_0_k = 0.02
+        spine_0_k = 0.02*coef
         
         v_spine = make_vector([keypoints[12][0],keypoints[12][1]], [keypoints[14][0],keypoints[14][1]])
         v_chest = make_vector([keypoints[45][0],keypoints[45][1]], [keypoints[71][0],keypoints[71][1]])    
@@ -551,9 +566,31 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
                 
                 
     #spine_3
-    debug_print('spine_3')     
-    traits['spine_3'] = 0
+    debug_print('spine_3')  
+    if not check_keypoints(keypoints, [11, 12, 13, 14, 15, 16]):   
+        traits['spine_3'] = 0
+    else:
+        points = get_points(keypoints, [11, 12, 13, 14, 15, 16])
+        if points[0][0] > points[5][0]:
+            points.reverse()
+        metric = curve_convexity_metric_6_points(points=np.array([item[:2] for item in points]))
+        print(metric)
+        
+        #with open('./outputs/__metrics_2.txt', 'a') as file:
+        #    file.write(f'{metric[0]}' + '\n')
             
+        # координата y считается сверху вниз
+        if metric[0] > 0.7:
+            traits['spine_3'] = 1
+        elif metric[0] < -0.7: 
+            traits['spine_3'] = 3
+        else:
+            traits['spine_3'] = 2
+                                
+        if draw:            
+            lines = get_lines(keypoints, [(11, 12), (12, 13), (13, 14), (14, 15), (15, 16)])
+            draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_spine_3.png')    
+                
     #'rump'
     debug_print('rump')
     if not check_keypoints(keypoints, [18, 19, 45]):
@@ -579,7 +616,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         
     #'angle_10'     
     debug_print('angle_10')     
-    if not check_keypoints(keypoints, [16, 17]):
+    if not check_keypoints(keypoints, [18, 19]):
 
         traits['angle_10'] = 0
 
@@ -589,15 +626,16 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         angle_10_k_2 = 0.16
         
         traits['angle_10']=trait_from_angle(horizont_line[0], horizont_line[1], 
-                                           (keypoints[16][0],keypoints[16][1]), 
-                                           (keypoints[17][0],keypoints[17][1]),
-                                           threshold=25, adjacent=True, coef1=angle_10_k_1, coef2=angle_10_k_2)    
+                                           (keypoints[18][0],keypoints[18][1]), 
+                                           (keypoints[19][0],keypoints[19][1]),
+                                           threshold=25, adjacent=True, coef1=angle_10_k_1, coef2=angle_10_k_2)  
+        
         
         if draw:
-            points = get_points(keypoints, [16, 17])
-            lines = get_lines(keypoints, [(16, 17)])
+            points = get_points(keypoints, [18, 19])
+            lines = get_lines(keypoints, [(18, 19)])
             lines.append(horizont_line)
-            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[16][0], keypoints[16][1]))  
+            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[19][0], keypoints[19][1]))  
             lines.append(aux_line)
             draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_angle_10.png')                     
     
@@ -608,7 +646,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         traits['rib_cage_0'] = 0
 
     else:   
-        rib_cage_k = 0.03
+        rib_cage_k = 0.03*coef
 
         v_horse = make_vector([keypoints[6][0],keypoints[6][1]], [keypoints[63][0],keypoints[63][1]])
         diff_y = (keypoints[47][1]-keypoints[43][1])/(get_len(v_horse)+0.001)
@@ -635,7 +673,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:      
     
-        falserib_k = 0.02
+        falserib_k = 0.02*coef
         
         v_1 = make_vector([keypoints[14][0],keypoints[14][1]], [keypoints[40][0],keypoints[40][1]])
         v_2 = make_vector([keypoints[16][0],keypoints[16][1]], [keypoints[20][0],keypoints[20][1]])    
@@ -657,14 +695,14 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:      
     
-        forearm_k = 0.02
+        forearm_k = 0.02*coef
         
         v_forearm = make_vector([keypoints[46][0],keypoints[46][1]], [keypoints[48][0],keypoints[48][1]])
         v_metacarpus = make_vector([keypoints[48][0],keypoints[48][1]], [keypoints[55][0],keypoints[55][1]])    
         
         debug_print(v_forearm, v_metacarpus)
            
-        traits['forearm'] = trait_from_two_vectors(v_forearm, v_metacarpus, (1/3), forearm_k, forearm_k)     
+        traits['forearm'] = trait_from_two_vectors(v_forearm, v_metacarpus, (1+1/3), forearm_k, forearm_k)     
         
         if draw:
             points = get_points(keypoints, [46, 48, 55])
@@ -673,24 +711,24 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         
     #headstock
     debug_print('headstock')
-    if not check_keypoints(keypoints, [48, 52, 55]):
+    if not check_keypoints(keypoints, [52, 55, 63]):
 
         traits['headstock'] = 0
 
     else:      
     
-        headstock_k = 0.02
+        headstock_k = 0.02*coef
         
-        v_headstock = make_vector([keypoints[52][0],keypoints[52][1]], [keypoints[55][0],keypoints[55][1]])
-        v_metacarpus = make_vector([keypoints[48][0],keypoints[48][1]], [keypoints[55][0],keypoints[55][1]])    
+        v_headstock = make_vector([keypoints[54][0],keypoints[54][1]], [keypoints[55][0],keypoints[55][1]])
+        v_metacarpus = make_vector([keypoints[52][0],keypoints[52][1]], [keypoints[55][0],keypoints[55][1]])    
         
         debug_print(v_headstock, v_metacarpus)
            
         traits['headstock'] = trait_from_two_vectors(v_headstock, v_metacarpus, (1/3), headstock_k, headstock_k)  
         
         if draw:
-            points = get_points(keypoints, [48, 52, 55])
-            lines = get_lines(keypoints, [(52, 55), (48, 55)])
+            points = get_points(keypoints, [52, 55, 63])
+            lines = get_lines(keypoints, [(52, 55), (55, 63)])
             draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_headstock.png')          
                     
     
@@ -708,7 +746,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         traits['angle_12'] = trait_from_angle(horizont_line[0], horizont_line[1], 
                                            (keypoints[63][0],keypoints[63][1]), 
                                            (keypoints[55][0],keypoints[55][1]),
-                                           threshold=56, adjacent=False, coef1=angle_12_k_1, coef2=angle_12_k_2)    
+                                           threshold=56, adjacent=True, coef1=angle_12_k_1, coef2=angle_12_k_2)    
         
         if draw:
             points = get_points(keypoints, [55, 63])
@@ -748,7 +786,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     else:      
     
-        tailstock_k = 0.02
+        tailstock_k = 0.02*coef
         
         v_tailstock = make_vector([keypoints[31][0],keypoints[31][1]], [keypoints[38][0],keypoints[39][1]])
         v_metatarsus = make_vector([keypoints[24][0],keypoints[24][1]], [keypoints[31][0],keypoints[31][1]])    
@@ -765,7 +803,7 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
 
     #'angle_15'     
     debug_print('angle_15')     
-    if not check_keypoints(keypoints, [31, 33]):
+    if not check_keypoints(keypoints, [31, 38]):
 
         traits['angle_15'] = 0
 
@@ -775,15 +813,15 @@ def calculate_traits(keypoints, breed='any', draw=False, image=None):
         angle_15_k_2 = 0.04
         
         traits['angle_15'] = trait_from_angle(horizont_line[0], horizont_line[1], 
-                                           (keypoints[33][0],keypoints[33][1]), 
-                                           (keypoints[31][0],keypoints[31][1]),
+                                           (keypoints[31][0],keypoints[31][1]), 
+                                           (keypoints[38][0],keypoints[38][1]),
                                            threshold=62.5, adjacent=False, coef1=angle_15_k_1, coef2=angle_15_k_2)   
         
         if draw:
-            points = get_points(keypoints, [31, 33])
-            lines = get_lines(keypoints, [(31, 33)])
-            lines.append(horizont_line)
-            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[33][0], keypoints[33][1]))  
+            points = get_points(keypoints, [31, 38])
+            lines = get_lines(keypoints, [(31, 38)])
+            #lines.append(horizont_line)
+            aux_line = find_parallel(horizont_line[0], horizont_line[1], (keypoints[31][0], keypoints[31][1]))  
             lines.append(aux_line)
             draw_points_and_lines(points=points,lines=lines, image=image, path='./outputs/__calculate_angle_15.png')            
         

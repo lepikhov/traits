@@ -186,7 +186,7 @@ def calculate_traits(device, image, breed=None):
     pt2 = int(p2[0]), h-int(p2[1])
     kps_image = cv2.line(kps_image, pt1, pt2, color=(0,0,255), thickness=5)
     cv2.imwrite("./outputs/__with_keypoints.png", kps_image)
-    return calculation.calculate_traits(kp, draw=True, image=cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR))    
+    return calculation.calculate_traits(kp, draw=False, image=cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR))    
 
 def predict_type(device, image): 
     

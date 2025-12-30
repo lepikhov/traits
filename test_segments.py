@@ -149,13 +149,13 @@ if __name__ == '__main__':
     #sample = 728
     #sample = 10
     
-    number_of_samples = 1
+    number_of_samples = 100
     #breed = 'any'
     breed = 'orlovskaya'
     
     random.seed(42)
     indxes = random.sample(range(len(df)), number_of_samples)
-    indxes = [334]
+    #indxes = [334]
     print('indexes: ',indxes)
     
     errors = {}
@@ -170,10 +170,13 @@ if __name__ == '__main__':
     
     #for idx in [100, 200, 300]:    
     #for idx in range(len(df)):  
-    #for idx in range(50):  
+    #for idx in range(0,1):  
     #for idx in range(sample, sample+2):
     for idx in indxes:     
         
+        #if df.iloc[idx]['spine_3'] != 2:
+        #    continue
+          
         counter += 1 
         
         filepath = df.iloc[idx]['imagedir']        
